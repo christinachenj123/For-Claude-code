@@ -1045,10 +1045,113 @@ function useTick(interval = 2000) {
   return tick;
 }
 
+/* ============= Modal ============= */
+function Modal({ title, onClose, onConfirm, confirmLabel = '确认提交', children, width = 520 }) {
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(5,11,26,0.75)',
+      backdropFilter: 'blur(4px)',
+      display: 'grid', placeItems: 'center',
+    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="card" style={{
+        width, maxWidth: 'calc(100vw - 48px)',
+        maxHeight: 'calc(100vh - 80px)',
+        display: 'flex', flexDirection: 'column',
+        boxShadow: '0 0 40px rgba(10,108,255,0.2), 0 24px 64px rgba(0,0,0,0.5)',
+        border: '1px solid var(--border-strong)',
+      }}>
+        <div className="card-header" style={{flexShrink: 0}}>
+          <h3 style={{fontSize: 15}}>{title}</h3>
+          <div className="actions">
+            <button className="btn icon-only ghost" onClick={onClose}>
+              <Icon name="x" size={15}/>
+            </button>
+          </div>
+        </div>
+        <div style={{overflowY: 'auto', padding: '20px 20px 8px'}}>
+          {children}
+        </div>
+        <div style={{
+          display: 'flex', justifyContent: 'flex-end', gap: 8,
+          padding: '12px 20px 16px',
+          borderTop: '1px solid var(--border)',
+          flexShrink: 0,
+        }}>
+          <button className="btn" onClick={onClose}>取消</button>
+          <button className="btn primary" onClick={onConfirm}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============= FormField ============= */
+function FormField({ label, required, children }) {
+  return (
+    <div style={{marginBottom: 16}}>
+      <div style={{
+        fontSize: 12, color: 'var(--text-3)',
+        marginBottom: 6, letterSpacing: 0.5,
+      }}>
+        {label}{required && <span style={{color: 'var(--danger)', marginLeft: 2}}>*</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FormInput({ value, onChange, placeholder }) {
+  return (
+    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      style={{
+        width: '100%', boxSizing: 'border-box',
+        background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--r-sm)', padding: '8px 10px',
+        color: 'var(--text-1)', fontSize: 13, outline: 'none',
+      }}/>
+  );
+}
+
+function FormSelect({ value, onChange, options }) {
+  return (
+    <select value={value} onChange={e => onChange(e.target.value)}
+      style={{
+        width: '100%', boxSizing: 'border-box',
+        background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--r-sm)', padding: '8px 10px',
+        color: 'var(--text-1)', fontSize: 13, outline: 'none',
+      }}>
+      {options.map(o => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
+    </select>
+  );
+}
+
+function FormTextarea({ value, onChange, placeholder, rows = 3 }) {
+  return (
+    <textarea value={value} onChange={e => onChange(e.target.value)}
+      placeholder={placeholder} rows={rows}
+      style={{
+        width: '100%', boxSizing: 'border-box', resize: 'vertical',
+        background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--r-sm)', padding: '8px 10px',
+        color: 'var(--text-1)', fontSize: 13, outline: 'none',
+        fontFamily: 'inherit',
+      }}/>
+  );
+}
+
 Object.assign(window, {
   Sidebar, Topbar, Card, KPI,
   Sparkline, LineChart, BarChart, Ring, Gauge,
   genWave, useTick, NAV, CRUMBS,
+  Modal, FormField, FormInput, FormSelect, FormTextarea,
 });
 })();
   </script>
@@ -1940,7 +2043,7 @@ window.DashboardScreen = DashboardScreen;
 })();
   </script>
   <script type="text/babel" data-presets="react">
-/* global React, Icon, Card, KPI, Ring, Sparkline, genWave */
+/* global React, Icon, Card, KPI, Ring, Sparkline, genWave, Modal, FormField, FormInput, FormSelect, FormTextarea */
 // 设备管理 - 变电站/线路/台账
 (() => {
 const { useState } = React;
@@ -1961,13 +2064,57 @@ const DEVICES = [
 const TYPES = ['全部', '变电站', '输电线路', '变压器', '开关站'];
 const VOLTAGES = ['全部', '500kV', '220kV', '110kV', '10kV'];
 
+function AddDeviceModal({ onClose, onAdd }) {
+  const [form, setForm] = useState({ id:'', name:'', type:'变电站', voltage:'220kV', area:'', status:'normal' });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  return (
+    <Modal title="新增设备" onClose={onClose} onConfirm={() => { onAdd(form); onClose(); }}>
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px'}}>
+        <FormField label="设备编号" required>
+          <FormInput value={form.id} onChange={v => set('id', v)} placeholder="如 SUB-2204"/>
+        </FormField>
+        <FormField label="设备名称" required>
+          <FormInput value={form.name} onChange={v => set('name', v)} placeholder="如 西部220kV变电站"/>
+        </FormField>
+        <FormField label="设备类型" required>
+          <FormSelect value={form.type} onChange={v => set('type', v)}
+            options={['变电站','输电线路','变压器','开关站']}/>
+        </FormField>
+        <FormField label="电压等级" required>
+          <FormSelect value={form.voltage} onChange={v => set('voltage', v)}
+            options={['500kV','220kV','110kV','10kV']}/>
+        </FormField>
+        <FormField label="所属区域" required>
+          <FormInput value={form.area} onChange={v => set('area', v)} placeholder="如 西部新区"/>
+        </FormField>
+        <FormField label="初始状态">
+          <FormSelect value={form.status} onChange={v => set('status', v)}
+            options={[{value:'normal',label:'正常'},{value:'warning',label:'预警'},{value:'danger',label:'告警'}]}/>
+        </FormField>
+      </div>
+      <FormField label="备注">
+        <FormTextarea value={form.remark || ''} onChange={v => set('remark', v)} placeholder="可选，填写设备备注信息" rows={2}/>
+      </FormField>
+    </Modal>
+  );
+}
+
 function DevicesScreen() {
   const [type, setType] = useState('全部');
   const [voltage, setVoltage] = useState('全部');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(DEVICES[0]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [devices, setDevices] = useState(DEVICES);
 
-  const filtered = DEVICES.filter(d =>
+  const handleAdd = (form) => {
+    if (!form.id || !form.name) return;
+    setDevices(prev => [{
+      ...form, load: 0, runtime: '0年', last: new Date().toISOString().slice(0,10), count: 0,
+    }, ...prev]);
+  };
+
+  const filtered = devices.filter(d =>
     (type === '全部' || d.type === type) &&
     (voltage === '全部' || d.voltage === voltage) &&
     (!search || d.name.includes(search) || d.id.includes(search))
@@ -1975,6 +2122,7 @@ function DevicesScreen() {
 
   return (
     <div className="fade-in" style={{display:'grid', gridTemplateColumns:'1fr 420px', gap:16, height:'100%'}}>
+    {showAdd && <AddDeviceModal onClose={() => setShowAdd(false)} onAdd={handleAdd}/>}
       {/* 左: 列表 */}
       <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
         {/* 顶部统计 */}
@@ -1994,7 +2142,7 @@ function DevicesScreen() {
                 </div>
                 <button className="btn"><Icon name="filter" size={13}/> 筛选</button>
                 <button className="btn"><Icon name="download" size={13}/> 导出</button>
-                <button className="btn primary"><Icon name="plus" size={13}/> 新增</button>
+                <button className="btn primary" onClick={() => setShowAdd(true)}><Icon name="plus" size={13}/> 新增</button>
               </>}
               noPad style={{flex:1, minHeight:0, display:'flex', flexDirection:'column'}}>
           {/* 筛选 chips */}
@@ -2668,7 +2816,7 @@ window.AlertsScreen = AlertsScreen;
 })();
   </script>
   <script type="text/babel" data-presets="react">
-/* global React, Icon, Card, KPI */
+/* global React, Icon, Card, KPI, Modal, FormField, FormInput, FormSelect, FormTextarea */
 // 运维工单流程
 (() => {
 const { useState } = React;
@@ -2696,20 +2844,72 @@ const PRIORITY = {
   '低': 'var(--text-3)',
 };
 
+function NewTicketModal({ onClose, onAdd }) {
+  const [form, setForm] = useState({ title:'', type:'故障处理', priority:'中', assignee:'', team:'', sla:'8H', desc:'' });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  return (
+    <Modal title="新建工单" onClose={onClose} onConfirm={() => { onAdd(form); onClose(); }}>
+      <FormField label="工单标题" required>
+        <FormInput value={form.title} onChange={v => set('title', v)} placeholder="简要描述问题或任务"/>
+      </FormField>
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0 16px'}}>
+        <FormField label="工单类型" required>
+          <FormSelect value={form.type} onChange={v => set('type', v)}
+            options={['故障处理','例行巡检','例行检测','消缺','例行校验']}/>
+        </FormField>
+        <FormField label="优先级" required>
+          <FormSelect value={form.priority} onChange={v => set('priority', v)}
+            options={['紧急','高','中','低']}/>
+        </FormField>
+        <FormField label="负责人" required>
+          <FormInput value={form.assignee} onChange={v => set('assignee', v)} placeholder="如 王伟"/>
+        </FormField>
+        <FormField label="责任班组">
+          <FormSelect value={form.team} onChange={v => set('team', v)}
+            options={['变电运维班','检修班','配网班','新能源班','继电保护班']}/>
+        </FormField>
+        <FormField label="SLA 时限">
+          <FormSelect value={form.sla} onChange={v => set('sla', v)}
+            options={['2H','4H','8H','24H','48H','72H']}/>
+        </FormField>
+      </div>
+      <FormField label="问题描述">
+        <FormTextarea value={form.desc} onChange={v => set('desc', v)}
+          placeholder="详细描述故障现象、位置、影响范围等"/>
+      </FormField>
+    </Modal>
+  );
+}
+
 function TicketsScreen() {
   const [view, setView] = useState('kanban');
   const [selected, setSelected] = useState(TICKETS[0]);
+  const [showNew, setShowNew] = useState(false);
+  const [tickets, setTickets] = useState(TICKETS);
+
+  const handleAdd = (form) => {
+    if (!form.title) return;
+    const id = `WO-${Date.now().toString().slice(-8)}`;
+    const now = new Date();
+    const created = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const newTicket = { id, title: form.title, type: form.type, priority: form.priority,
+      assignee: form.assignee || '待分配', team: form.team, sla: form.sla,
+      status: 'pending', progress: 0, created };
+    setTickets(prev => [newTicket, ...prev]);
+    setSelected(newTicket);
+  };
 
   return (
     <div className="fade-in" style={{display:'flex', flexDirection:'column', gap:12, height:'100%'}}>
+    {showNew && <NewTicketModal onClose={() => setShowNew(false)} onAdd={handleAdd}/>}
       <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr) auto', gap:12, alignItems:'stretch'}}>
-        <KPI label="今日新增" value="12" unit="单" delta={20} deltaLabel="同昨" color="var(--primary)"/>
-        <KPI label="进行中" value="8" unit="单" color="var(--warning)"/>
-        <KPI label="已完成" value="34" unit="单" delta={6.3} deltaLabel="同昨" color="var(--success)"/>
+        <KPI label="今日新增" value={tickets.length} unit="单" delta={20} deltaLabel="同昨" color="var(--primary)"/>
+        <KPI label="进行中" value={tickets.filter(t=>t.status==='doing').length} unit="单" color="var(--warning)"/>
+        <KPI label="已完成" value={tickets.filter(t=>t.status==='done').length} unit="单" delta={6.3} deltaLabel="同昨" color="var(--success)"/>
         <KPI label="平均时长" value="2.4" unit="H" delta={-12.5} deltaLabel="本周" color="var(--info)"/>
         <KPI label="SLA 达成率" value="98.2" unit="%" delta={0.6} deltaLabel="本月" color="var(--success)" status="优秀"/>
         <div style={{display:'flex', alignItems:'flex-end'}}>
-          <button className="btn primary" style={{height:42, padding:'0 18px'}}><Icon name="plus" size={14}/> 新建工单</button>
+          <button className="btn primary" style={{height:42, padding:'0 18px'}} onClick={() => setShowNew(true)}><Icon name="plus" size={14}/> 新建工单</button>
         </div>
       </div>
 
@@ -2730,7 +2930,7 @@ function TicketsScreen() {
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:14, padding:16, flex:1, minHeight:0}}>
             {['pending', 'doing', 'done'].map(col => {
               const status = STATUS[col];
-              const list = TICKETS.filter(t => t.status === col);
+              const list = tickets.filter(t => t.status === col);
               return (
                 <div key={col} style={{display:'flex', flexDirection:'column', gap:10, minHeight:0}}>
                   <div style={{display:'flex', alignItems:'center', gap:8, padding:'6px 8px',
@@ -2759,7 +2959,7 @@ function TicketsScreen() {
                 </tr>
               </thead>
               <tbody>
-                {TICKETS.map(t => (
+                {tickets.map(t => (
                   <tr key={t.id} onClick={()=>setSelected(t)} style={{cursor:'pointer'}}
                       className={selected?.id === t.id ? 'selected' : ''}>
                     <td><code style={{color:'var(--info)', fontSize:11}}>{t.id}</code></td>
