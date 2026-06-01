@@ -741,9 +741,9 @@ function Topbar({ active }) {
         <span>{date} {week}</span>
         <span className="time">{time}</span>
         <div className="v-divider" style={{height:20}} />
-        <button className="icon-btn"><Icon name="refresh" size={16}/></button>
-        <button className="icon-btn"><Icon name="bell" size={16}/><span className="dot"/></button>
-        <button className="icon-btn"><Icon name="settings" size={16}/></button>
+        <button className="icon-btn" onClick={() => window.showToast?.('数据已刷新', 'success')}><Icon name="refresh" size={16}/></button>
+        <button className="icon-btn" onClick={() => window.showToast?.('暂无新通知', 'info')}><Icon name="bell" size={16}/><span className="dot"/></button>
+        <button className="icon-btn" onClick={() => window.postMessage({type:'__activate_edit_mode'}, '*')}><Icon name="settings" size={16}/></button>
       </div>
     </header>
   );
@@ -1147,11 +1147,47 @@ function FormTextarea({ value, onChange, placeholder, rows = 3 }) {
   );
 }
 
+/* ============= Toast 通知 ============= */
+function ToastContainer() {
+  const [toasts, setToasts] = useState([]);
+  useEffect(() => {
+    window.showToast = (message, type = 'success') => {
+      const id = Date.now() + Math.random();
+      setToasts(prev => [...prev, { id, message, type }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3200);
+    };
+    return () => { delete window.showToast; };
+  }, []);
+  if (!toasts.length) return null;
+  const colors = { success:'var(--success)', warning:'var(--warning)', error:'var(--danger)', info:'var(--info)' };
+  const icons  = { success:'check', warning:'alert', error:'x', info:'bell' };
+  return (
+    <div style={{position:'fixed', bottom:24, right:24, zIndex:99999, display:'flex', flexDirection:'column-reverse', gap:8, pointerEvents:'none'}}>
+      {toasts.map(t => {
+        const color = colors[t.type] || colors.info;
+        return (
+          <div key={t.id} style={{
+            display:'flex', alignItems:'center', gap:10,
+            background:'var(--bg-elevated)', border:`1px solid ${color}`,
+            borderRadius:'var(--r-md)', padding:'10px 16px',
+            boxShadow:`0 4px 20px rgba(0,0,0,0.4), 0 0 12px ${color}33`,
+            fontSize:13, minWidth:240, maxWidth:380, animation:'slideIn .2s ease both',
+          }}>
+            <Icon name={icons[t.type] || 'bell'} size={14} style={{color, flexShrink:0}}/>
+            <span>{t.message}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 Object.assign(window, {
   Sidebar, Topbar, Card, KPI,
   Sparkline, LineChart, BarChart, Ring, Gauge,
   genWave, useTick, NAV, CRUMBS,
   Modal, FormField, FormInput, FormSelect, FormTextarea,
+  ToastContainer,
 });
 })();
   </script>
@@ -1789,8 +1825,8 @@ function DashboardScreen() {
       <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
         <Card title="电网实时拓扑" tag="500kV / 220kV" live
               actions={<>
-                <button className="btn sm ghost"><Icon name="filter" size={13}/> 筛选</button>
-                <button className="btn sm ghost"><Icon name="expand" size={13}/></button>
+                <button className="btn sm ghost" onClick={() => window.showToast?.('节点筛选：当前显示全部', 'info')}><Icon name="filter" size={13}/> 筛选</button>
+                <button className="btn sm ghost" onClick={() => window.showToast?.('全屏模式暂不支持', 'info')}><Icon name="expand" size={13}/></button>
               </>}
               glow noPad style={{flex: '1 1 0', minHeight:0}}>
           <GridTopology tick={tick}/>
@@ -1815,7 +1851,7 @@ function DashboardScreen() {
       {/* 右侧 告警 + 区域负荷 + 新能源 */}
       <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
         <Card title="实时告警" tag="LIVE" live
-              actions={<button className="btn sm ghost">查看全部 <Icon name="chevron" size={11}/></button>}>
+              actions={<button className="btn sm ghost" onClick={() => window.__navigate?.('alerts')}>查看全部 <Icon name="chevron" size={11}/></button>}>
           <div style={{display:'flex', flexDirection:'column', gap:8}}>
             {ALERTS.map((a, i) => (
               <div key={i} style={{
@@ -2140,8 +2176,8 @@ function DevicesScreen() {
                   <Icon name="search" size={14}/>
                   <input placeholder="搜索设备 ID / 名称" value={search} onChange={e=>setSearch(e.target.value)}/>
                 </div>
-                <button className="btn"><Icon name="filter" size={13}/> 筛选</button>
-                <button className="btn"><Icon name="download" size={13}/> 导出</button>
+                <button className="btn" onClick={() => window.showToast?.('高级筛选暂不支持', 'info')}><Icon name="filter" size={13}/> 筛选</button>
+                <button className="btn" onClick={() => window.showToast?.('正在导出设备台账...', 'info')}><Icon name="download" size={13}/> 导出</button>
                 <button className="btn primary" onClick={() => setShowAdd(true)}><Icon name="plus" size={13}/> 新增</button>
               </>}
               noPad style={{flex:1, minHeight:0, display:'flex', flexDirection:'column'}}>
@@ -2228,6 +2264,7 @@ function DevicesScreen() {
 function DeviceDetail({ device }) {
   const tempData = genWave(20, 38, 4, 0);
   const loadData = genWave(20, device.load, 8, 0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div style={{display:'flex', flexDirection:'column', gap:12, height:'100%'}}>
@@ -2246,7 +2283,24 @@ function DeviceDetail({ device }) {
               </span>
             </div>
           </div>
-          <button className="btn icon-only ghost"><Icon name="more" size={14}/></button>
+          <div style={{position:'relative'}}>
+            <button className="btn icon-only ghost" onClick={() => setMenuOpen(o => !o)}><Icon name="more" size={14}/></button>
+            {menuOpen && (
+              <div style={{
+                position:'absolute', right:0, top:'110%', zIndex:50,
+                background:'var(--bg-elevated)', border:'1px solid var(--border-strong)',
+                borderRadius:'var(--r-md)', padding:4, minWidth:140,
+                boxShadow:'0 8px 24px rgba(0,0,0,0.35)',
+              }}>
+                {[{label:'编辑信息', icon:'edit'},{label:'发起巡检', icon:'check'},{label:'删除设备', icon:'trash'}].map(item => (
+                  <button key={item.label} className="btn ghost" style={{width:'100%', justifyContent:'flex-start', padding:'7px 10px'}}
+                    onClick={() => { window.showToast?.(item.label + '功能开发中', 'info'); setMenuOpen(false); }}>
+                    <Icon name={item.icon} size={13}/> {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginTop:14}}>
@@ -2346,11 +2400,17 @@ const { useState, useMemo } = React;
 function LoadScreen() {
   const [range, setRange] = useState('24h');
   const [model, setModel] = useState('LSTM-v3');
+  const [seed, setSeed] = useState(0);
 
-  const labels24 = Array.from({length:24}, (_, i) => String(i).padStart(2,'0')+':00');
-  const actual = useMemo(() => genWave(24, 1850, 380, -1, 0.06), []);
-  const predicted = useMemo(() => genWave(24, 1900, 400, -1, 0.04), []);
-  const ai = useMemo(() => genWave(24, 1880, 390, -1, 0.03), []);
+  const rangeCfg = {
+    '24h': { n:24, labels: Array.from({length:24},(_,i)=>String(i).padStart(2,'0')+':00'), base:1850, amp:380 },
+    '7d':  { n:7,  labels: ['周一','周二','周三','周四','周五','周六','周日'], base:2100, amp:250 },
+    '30d': { n:30, labels: Array.from({length:30},(_,i)=>String(i+1)+'日'), base:1950, amp:300 },
+  };
+  const cfg = rangeCfg[range];
+  const actual    = useMemo(() => genWave(cfg.n, cfg.base, cfg.amp, -1, 0.06), [range]);
+  const predicted = useMemo(() => genWave(cfg.n, cfg.base+50, cfg.amp+20, -1, 0.04), [range]);
+  const ai        = useMemo(() => genWave(cfg.n, cfg.base+30, cfg.amp+10, -1, 0.03), [range, seed]);
 
   // 7天对比
   const days = ['周一','周二','周三','周四','周五','周六','周日'];
@@ -2383,8 +2443,8 @@ function LoadScreen() {
                 <option>XGBoost-2</option>
                 <option>Prophet</option>
               </select>
-              <button className="btn"><Icon name="refresh" size={13}/> 重新预测</button>
-              <button className="btn"><Icon name="download" size={13}/></button>
+              <button className="btn" onClick={() => { setSeed(s=>s+1); window.showToast?.(`${model} 重新预测完成`, 'success'); }}><Icon name="refresh" size={13}/> 重新预测</button>
+              <button className="btn" onClick={() => window.showToast?.('正在导出预测报告...', 'info')}><Icon name="download" size={13}/></button>
             </>}>
         <div style={{display:'flex', gap:16, marginBottom:8}}>
           <Legend color="#0A6CFF" label="实际负荷" glow/>
@@ -2393,7 +2453,7 @@ function LoadScreen() {
         </div>
         <LineChart
           height={300}
-          labels={labels24}
+          labels={cfg.labels}
           yUnit="MW"
           series={[
             { name: '实际负荷', data: actual, color: '#0A6CFF', glow: true },
@@ -2512,7 +2572,7 @@ window.LoadScreen = LoadScreen;
 })();
   </script>
   <script type="text/babel" data-presets="react">
-/* global React, Icon, Card, KPI */
+/* global React, Icon, Card, KPI, Modal, FormField, FormInput, FormSelect, FormTextarea */
 // 告警与事件中心
 (() => {
 const { useState } = React;
@@ -2543,31 +2603,41 @@ const STATUS_MAP = {
 
 function AlertsScreen() {
   const [filter, setFilter] = useState('all');
+  const [alerts, setAlerts] = useState(ALL_ALERTS);
   const [selected, setSelected] = useState(ALL_ALERTS[0]);
 
-  const filtered = ALL_ALERTS.filter(a =>
+  const updateAlert = (id, updates) => {
+    setAlerts(prev => prev.map(a => a.id === id ? {...a, ...updates} : a));
+    setSelected(prev => prev?.id === id ? {...prev, ...updates} : prev);
+  };
+
+  const filtered = alerts.filter(a =>
     filter === 'all' ? true :
     filter === 'active' ? a.status === 'active' :
     filter === 'critical' ? a.level === 'critical' :
     a.status === filter
   );
 
+  const activeCount = alerts.filter(a => a.status === 'active').length;
+  const criticalCount = alerts.filter(a => a.level === 'critical').length;
+  const resolvedCount = alerts.filter(a => a.status === 'resolved').length;
+
   return (
     <div className="fade-in" style={{display:'grid', gridTemplateColumns:'1fr 460px', gap:16, height:'100%'}}>
       <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
         {/* KPI 行 */}
         <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12}}>
-          <KPI label="未处理告警" value="14" unit="条" delta={16.7} deltaLabel="同昨" color="var(--danger)" status="紧急"/>
-          <KPI label="紧急告警" value="2" unit="条" color="var(--danger)"/>
-          <KPI label="今日总计" value="86" unit="条" delta={-8.4} deltaLabel="同昨" color="var(--warning)"/>
-          <KPI label="已恢复" value="64" unit="条" delta={4.1} deltaLabel="同昨" color="var(--success)"/>
+          <KPI label="未处理告警" value={activeCount} unit="条" delta={16.7} deltaLabel="同昨" color="var(--danger)" status="紧急"/>
+          <KPI label="紧急告警" value={criticalCount} unit="条" color="var(--danger)"/>
+          <KPI label="今日总计" value={alerts.length} unit="条" delta={-8.4} deltaLabel="同昨" color="var(--warning)"/>
+          <KPI label="已恢复" value={resolvedCount} unit="条" delta={4.1} deltaLabel="同昨" color="var(--success)"/>
           <KPI label="平均处理时长" value="12.4" unit="min" delta={-15.2} deltaLabel="同昨" color="var(--info)"/>
         </div>
 
         {/* 时间轴 + 列表 */}
         <Card title="告警时间轴 · 24H" tag="LIVE" noPad>
           <div style={{padding:'14px 20px'}}>
-            <AlertTimeline alerts={ALL_ALERTS}/>
+            <AlertTimeline alerts={alerts}/>
           </div>
         </Card>
 
@@ -2622,7 +2692,7 @@ function AlertsScreen() {
                       <td><span className="chip dot" style={{color:st.color}}>{st.label}</span></td>
                       <td className="text-2 text-sm">{a.op}</td>
                       <td>
-                        <button className="btn sm">详情</button>
+                        <button className="btn sm" onClick={e => { e.stopPropagation(); setSelected(a); }}>详情</button>
                       </td>
                     </tr>
                   );
@@ -2635,7 +2705,7 @@ function AlertsScreen() {
 
       {/* 右: 告警详情 */}
       <div style={{minWidth:0}}>
-        {selected && <AlertDetail alert={selected}/>}
+        {selected && <AlertDetail alert={selected} onUpdate={updateAlert}/>}
       </div>
     </div>
   );
@@ -2689,8 +2759,27 @@ function AlertTimeline({ alerts }) {
   );
 }
 
-function AlertDetail({ alert }) {
+function AlertDetail({ alert, onUpdate }) {
   const lv = LEVEL_MAP[alert.level], st = STATUS_MAP[alert.status];
+  const handleConfirm = () => {
+    if (alert.status === 'active') {
+      onUpdate(alert.id, { status: 'ack', op: '张志远' });
+      window.showToast?.('告警已确认，等待处理', 'success');
+    } else {
+      window.showToast?.('该告警已' + st.label, 'info');
+    }
+  };
+  const handleDispatch = () => {
+    window.__pendingTicket = {
+      title: alert.title,
+      type: '故障处理',
+      priority: alert.level === 'critical' ? '紧急' : alert.level === 'high' ? '高' : '中',
+      desc: `[来源告警 ${alert.id}] ${alert.desc}`,
+      team: '变电运维班',
+    };
+    window.__navigate?.('tickets');
+    window.showToast?.('已跳转工单页，工单已预填写', 'success');
+  };
   return (
     <div style={{display:'flex', flexDirection:'column', gap:12, height:'100%'}}>
       <Card headerless noPad glow style={{padding:16}}>
@@ -2716,9 +2805,9 @@ function AlertDetail({ alert }) {
         </div>
 
         <div style={{display:'flex', gap:8, marginTop:14}}>
-          <button className="btn primary" style={{flex:1}}><Icon name="check" size={14}/> 确认告警</button>
-          <button className="btn" style={{flex:1}}><Icon name="ticket" size={14}/> 派发工单</button>
-          <button className="btn icon-only"><Icon name="more" size={14}/></button>
+          <button className="btn primary" style={{flex:1}} onClick={handleConfirm}><Icon name="check" size={14}/> 确认告警</button>
+          <button className="btn" style={{flex:1}} onClick={handleDispatch}><Icon name="ticket" size={14}/> 派发工单</button>
+          <button className="btn icon-only" onClick={() => window.showToast?.('更多操作开发中', 'info')}><Icon name="more" size={14}/></button>
         </div>
       </Card>
 
@@ -2845,7 +2934,9 @@ const PRIORITY = {
 };
 
 function NewTicketModal({ onClose, onAdd }) {
-  const [form, setForm] = useState({ title:'', type:'故障处理', priority:'中', assignee:'', team:'', sla:'8H', desc:'' });
+  const pending = window.__pendingTicket || {};
+  const [form, setForm] = useState({ title: pending.title||'', type: pending.type||'故障处理', priority: pending.priority||'中', assignee: pending.assignee||'', team: pending.team||'', sla:'8H', desc: pending.desc||'' });
+  React.useEffect(() => { delete window.__pendingTicket; }, []);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   return (
     <Modal title="新建工单" onClose={onClose} onConfirm={() => { onAdd(form); onClose(); }}>
@@ -2884,8 +2975,9 @@ function NewTicketModal({ onClose, onAdd }) {
 function TicketsScreen() {
   const [view, setView] = useState('kanban');
   const [selected, setSelected] = useState(TICKETS[0]);
-  const [showNew, setShowNew] = useState(false);
+  const [showNew, setShowNew] = useState(() => !!window.__pendingTicket);
   const [tickets, setTickets] = useState(TICKETS);
+  const [ticketSearch, setTicketSearch] = useState('');
 
   const handleAdd = (form) => {
     if (!form.title) return;
@@ -2919,7 +3011,7 @@ function TicketsScreen() {
             actions={<>
               <div className="search">
                 <Icon name="search" size={13}/>
-                <input placeholder="搜索工单"/>
+                <input placeholder="搜索工单" value={ticketSearch} onChange={e => setTicketSearch(e.target.value)}/>
               </div>
               <div style={{display:'flex', background:'var(--bg-elevated)', borderRadius:'var(--r-sm)', padding:2}}>
                 <button onClick={()=>setView('kanban')} className={`btn sm ${view==='kanban'?'primary':'ghost'}`} style={{borderRadius:3, padding:'3px 12px'}}>看板</button>
@@ -2930,7 +3022,7 @@ function TicketsScreen() {
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:14, padding:16, flex:1, minHeight:0}}>
             {['pending', 'doing', 'done'].map(col => {
               const status = STATUS[col];
-              const list = tickets.filter(t => t.status === col);
+              const list = tickets.filter(t => t.status === col && (!ticketSearch || t.title.includes(ticketSearch) || t.id.includes(ticketSearch)));
               return (
                 <div key={col} style={{display:'flex', flexDirection:'column', gap:10, minHeight:0}}>
                   <div style={{display:'flex', alignItems:'center', gap:8, padding:'6px 8px',
@@ -2959,7 +3051,7 @@ function TicketsScreen() {
                 </tr>
               </thead>
               <tbody>
-                {tickets.map(t => (
+                {tickets.filter(t => !ticketSearch || t.title.includes(ticketSearch) || t.id.includes(ticketSearch)).map(t => (
                   <tr key={t.id} onClick={()=>setSelected(t)} style={{cursor:'pointer'}}
                       className={selected?.id === t.id ? 'selected' : ''}>
                     <td><code style={{color:'var(--info)', fontSize:11}}>{t.id}</code></td>
@@ -3042,8 +3134,15 @@ const { useState, useMemo } = React;
 function EnergyScreen() {
   const [period, setPeriod] = useState('month');
 
-  const monthLabels = Array.from({length: 30}, (_, i) => String(i+1));
-  const consumption = useMemo(() => genWave(30, 4200, 800, 0, 0.08), []);
+  const periodCfg = {
+    day:     { n:24,  labels: Array.from({length:24},(_,i)=>String(i)+':00'), base:180, amp:40, yUnit:'GWh', title:'日用电曲线' },
+    week:    { n:7,   labels: ['周一','周二','周三','周四','周五','周六','周日'], base:3800, amp:600, yUnit:'GWh', title:'周用电曲线' },
+    month:   { n:30,  labels: Array.from({length:30},(_,i)=>String(i+1)), base:4200, amp:800, yUnit:'GWh', title:'月度用电曲线' },
+    quarter: { n:12,  labels: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'], base:1200, amp:200, yUnit:'亿kWh', title:'季度用电曲线' },
+    year:    { n:5,   labels: ['2021','2022','2023','2024','2025'], base:1400, amp:150, yUnit:'亿kWh', title:'年度用电曲线' },
+  };
+  const cfg = periodCfg[period];
+  const consumption = useMemo(() => genWave(cfg.n, cfg.base, cfg.amp, 0, 0.08), [period]);
 
   return (
     <div className="fade-in" style={{display:'flex', flexDirection:'column', gap:12}}>
@@ -3063,8 +3162,8 @@ function EnergyScreen() {
         </div>
         <div style={{display:'flex', gap:8, alignItems:'center'}}>
           <span className="text-3 text-sm">2025年11月</span>
-          <button className="btn"><Icon name="clock" size={13}/> 选择时段</button>
-          <button className="btn"><Icon name="download" size={13}/> 导出报表</button>
+          <button className="btn" onClick={() => window.showToast?.('日期选择器开发中', 'info')}><Icon name="clock" size={13}/> 选择时段</button>
+          <button className="btn" onClick={() => window.showToast?.('正在生成报表，请稍候...', 'info')}><Icon name="download" size={13}/> 导出报表</button>
         </div>
       </div>
 
@@ -3079,18 +3178,18 @@ function EnergyScreen() {
       </div>
 
       <div style={{display:'grid', gridTemplateColumns:'2fr 1fr', gap:12}}>
-        <Card title="月度用电曲线" tag="kWh"
+        <Card title={cfg.title} tag={cfg.yUnit}
               actions={<>
-                <span className="chip"><span style={{width:8,height:2,background:'var(--primary)',display:'inline-block',marginRight:4}}/>当月</span>
+                <span className="chip"><span style={{width:8,height:2,background:'var(--primary)',display:'inline-block',marginRight:4}}/>当期</span>
                 <span className="chip"><span style={{width:8,height:2,background:'var(--purple)',display:'inline-block',marginRight:4, opacity:0.6}}/>同期</span>
               </>}>
           <LineChart
             height={240}
-            labels={monthLabels}
-            yUnit="GWh"
+            labels={cfg.labels}
+            yUnit={cfg.yUnit}
             series={[
-              { name: '当月用电', data: consumption.map(v => Math.round(v/10)), color: '#0A6CFF', glow: true },
-              { name: '去年同期', data: genWave(30, 380, 60, 0, 0.06), color: '#9D7BFF', dashed: true, area: false },
+              { name: '当期用电', data: consumption.map(v => Math.round(v/10)), color: '#0A6CFF', glow: true },
+              { name: '去年同期', data: genWave(cfg.n, Math.round(cfg.base*0.9/10), Math.round(cfg.amp*0.6/10), 0, 0.06), color: '#9D7BFF', dashed: true, area: false },
             ]}/>
         </Card>
 
@@ -3590,7 +3689,7 @@ window.RenewableScreen = RenewableScreen;
   <script type="text/babel" data-presets="react">
 /* global React, ReactDOM, Sidebar, Topbar,
    DashboardScreen, DevicesScreen, LoadScreen, AlertsScreen, TicketsScreen, EnergyScreen, RenewableScreen,
-   TweaksPanel, useTweaks, TweakSection, TweakColor, TweakRadio, TweakSelect */
+   TweaksPanel, useTweaks, TweakSection, TweakColor, TweakRadio, TweakSelect, ToastContainer */
 (() => {
 const { useState, useEffect } = React;
 
@@ -3613,6 +3712,11 @@ const COLOR_MAP = {
 function App() {
   const [active, setActive] = useState('dashboard');
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  useEffect(() => {
+    window.__navigate = setActive;
+    return () => { delete window.__navigate; };
+  }, []);
 
   // 应用主题
   useEffect(() => {
@@ -3649,6 +3753,7 @@ function App() {
         <Screen key={active}/>
       </main>
 
+      <ToastContainer/>
       <TweaksPanel title="Tweaks" defaultOpen={false}>
         <TweakSection title="主色调">
           <TweakColor
