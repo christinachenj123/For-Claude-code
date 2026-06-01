@@ -1,0 +1,3515 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=1440"/>
+  <title>电力调度管理平台</title>
+  <style>
+/* ============================================
+   电力系统调度平台 - 设计令牌
+   ============================================ */
+
+:root {
+  /* 主色 - 科技蓝 */
+  --primary: #0A6CFF;
+  --primary-hover: #2D85FF;
+  --primary-active: #0856D6;
+  --primary-glow: rgba(10, 108, 255, 0.45);
+  --primary-soft: rgba(10, 108, 255, 0.12);
+  --primary-border: rgba(10, 108, 255, 0.32);
+
+  /* 背景层级 (深色科技风) */
+  --bg-base: #050B1A;
+  --bg-canvas: #08111F;
+  --bg-elevated: #0E1A2E;
+  --bg-card: #101D33;
+  --bg-card-hover: #142441;
+  --bg-overlay: rgba(8, 17, 31, 0.72);
+
+  /* 边框 / 分割线 */
+  --border: rgba(120, 160, 220, 0.14);
+  --border-strong: rgba(120, 160, 220, 0.24);
+  --border-glow: rgba(10, 108, 255, 0.5);
+
+  /* 文本 */
+  --text-1: #EAF2FF;
+  --text-2: #A7B6CF;
+  --text-3: #6B7C99;
+  --text-mute: #4A5874;
+
+  /* 状态色 */
+  --success: #22D38A;
+  --success-soft: rgba(34, 211, 138, 0.14);
+  --warning: #FFAB2D;
+  --warning-soft: rgba(255, 171, 45, 0.14);
+  --danger: #FF4E6A;
+  --danger-soft: rgba(255, 78, 106, 0.14);
+  --info: #25C6FF;
+  --info-soft: rgba(37, 198, 255, 0.14);
+  --purple: #9D7BFF;
+  --teal: #2EE6D6;
+
+  /* 图表色板 */
+  --chart-1: #0A6CFF;
+  --chart-2: #25C6FF;
+  --chart-3: #2EE6D6;
+  --chart-4: #9D7BFF;
+  --chart-5: #FFAB2D;
+  --chart-6: #FF4E6A;
+
+  /* 字号 */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 28px;
+  --fs-3xl: 40px;
+  --fs-4xl: 56px;
+
+  /* 间距 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* 圆角 */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+
+  /* 阴影 / 发光 */
+  --glow-sm: 0 0 12px var(--primary-glow);
+  --glow-md: 0 0 24px var(--primary-glow);
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.35);
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-digit: "DIN Alternate", "DIN Condensed", "Bebas Neue", -apple-system, sans-serif;
+}
+
+/* ============= 浅色主题 ============= */
+:root[data-theme="light"] {
+  --bg-base: #F2F5FB;
+  --bg-canvas: #F7F9FD;
+  --bg-elevated: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F2F5FB;
+  --bg-overlay: rgba(255, 255, 255, 0.85);
+  --border: rgba(15, 30, 60, 0.08);
+  --border-strong: rgba(15, 30, 60, 0.16);
+  --text-1: #0B1B33;
+  --text-2: #4A5874;
+  --text-3: #7A8AA6;
+  --text-mute: #A6B3C8;
+  --shadow-card: 0 1px 2px rgba(15,30,60,0.04), 0 4px 16px rgba(15,30,60,0.06);
+}
+
+/* ============= 圆角变体 ============= */
+:root[data-radius="sharp"] {
+  --r-sm: 0px; --r-md: 2px; --r-lg: 4px; --r-xl: 6px;
+}
+:root[data-radius="soft"] {
+  --r-sm: 6px; --r-md: 12px; --r-lg: 18px; --r-xl: 24px;
+}
+
+/* ============= 密度变体 ============= */
+:root[data-density="compact"] {
+  --fs-base: 12px; --fs-md: 13px; --fs-lg: 15px;
+  --sp-3: 8px; --sp-4: 12px; --sp-5: 14px; --sp-6: 18px;
+}
+:root[data-density="comfortable"] {
+  --fs-base: 14px; --fs-md: 16px; --fs-lg: 18px;
+  --sp-3: 14px; --sp-4: 20px; --sp-5: 24px; --sp-6: 28px;
+}
+
+/* ============= 基础 ============= */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  color: var(--text-1);
+  background: var(--bg-base);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
+input, select, textarea { font-family: inherit; color: inherit; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-mute); }
+
+/* ============= App Shell ============= */
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(10,108,255,0.10), transparent 60%),
+    radial-gradient(900px 500px at 95% 110%, rgba(37,198,255,0.06), transparent 60%),
+    var(--bg-base);
+}
+
+/* Sidebar */
+.sidebar {
+  grid-row: 1 / 3;
+  background: linear-gradient(180deg, rgba(14,26,46,0.85), rgba(8,17,31,0.85));
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(20px);
+}
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-brand .logo {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--primary), var(--info));
+  display: grid; place-items: center;
+  box-shadow: 0 0 16px var(--primary-glow);
+  position: relative;
+}
+.sidebar-brand .logo svg { width: 18px; height: 18px; color: white; }
+.sidebar-brand h1 {
+  font-size: 15px;
+  margin: 0;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.sidebar-brand .sub { font-size: 10px; color: var(--text-3); letter-spacing: 2px; }
+
+.nav {
+  flex: 1;
+  padding: 12px 10px;
+  display: flex; flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.nav-section {
+  font-size: 10px;
+  color: var(--text-mute);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 12px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  color: var(--text-2);
+  font-size: var(--fs-md);
+  cursor: pointer;
+  position: relative;
+  transition: all .15s ease;
+}
+.nav-item:hover { background: var(--bg-card-hover); color: var(--text-1); }
+.nav-item.active {
+  background: linear-gradient(90deg, var(--primary-soft), transparent);
+  color: var(--text-1);
+}
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+  background: var(--primary); border-radius: 2px;
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+.nav-item .icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.85; }
+.nav-item.active .icon { color: var(--primary); opacity: 1; }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  min-width: 16px; text-align: center;
+}
+
+.sidebar-user {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--purple));
+  display: grid; place-items: center;
+  color: white; font-weight: 600; font-size: 12px;
+}
+.user-info { line-height: 1.3; }
+.user-info .name { font-size: 13px; }
+.user-info .role { font-size: 10px; color: var(--text-3); }
+
+/* Topbar */
+.topbar {
+  display: flex; align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8, 17, 31, 0.6);
+  backdrop-filter: blur(20px);
+  gap: 20px;
+  position: relative;
+  z-index: 5;
+}
+.topbar .crumb { color: var(--text-2); font-size: var(--fs-md); }
+.topbar .crumb b { color: var(--text-1); font-weight: 500; }
+.topbar .clock {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 14px;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.topbar .clock .time {
+  font-family: var(--font-digit);
+  color: var(--text-1);
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+.topbar .icon-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--r-md);
+  display: grid; place-items: center;
+  color: var(--text-2);
+  position: relative;
+}
+.topbar .icon-btn:hover { background: var(--bg-card-hover); color: var(--text-1); }
+.topbar .icon-btn .dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--danger); box-shadow: 0 0 6px var(--danger);
+}
+.topbar .env-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(34,211,138,0.3);
+  letter-spacing: 1px;
+}
+
+/* Main content */
+.main {
+  overflow-y: auto;
+  padding: 18px 20px;
+  position: relative;
+}
+
+/* ============= Reusable Components ============= */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+.card.glow { border-color: var(--primary-border); }
+.card.glow::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--primary-soft), transparent 40%);
+  pointer-events: none;
+}
+.card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.card-header h3 {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+.card-header .tag {
+  font-size: 10px; color: var(--primary);
+  border: 1px solid var(--primary-border);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--primary-soft);
+  letter-spacing: 1px;
+}
+.card-header .live-dot {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--success);
+}
+.card-header .live-dot::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+.card-header .actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.card-body { padding: 16px; }
+.card-decoration {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.4;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-base);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-card);
+  color: var(--text-2);
+  transition: all .15s;
+}
+.btn:hover { background: var(--bg-card-hover); color: var(--text-1); border-color: var(--primary-border); }
+.btn.primary {
+  background: linear-gradient(180deg, var(--primary), var(--primary-active));
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+.btn.primary:hover { background: var(--primary-hover); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.icon-only { padding: 6px; width: 28px; height: 28px; justify-content: center; }
+.btn.sm { padding: 3px 8px; font-size: 11px; }
+
+/* Chips & Tags */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  background: var(--bg-card-hover);
+  color: var(--text-2);
+}
+.chip.success { background: var(--success-soft); color: var(--success); }
+.chip.warning { background: var(--warning-soft); color: var(--warning); }
+.chip.danger { background: var(--danger-soft); color: var(--danger); }
+.chip.info { background: var(--info-soft); color: var(--info); }
+.chip.dot::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor;
+}
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  padding: 10px 16px;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all .15s;
+}
+.tab:hover { color: var(--text-1); }
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Table */
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+table.data th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 500;
+  color: var(--text-3);
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+table.data td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-1);
+}
+table.data tr:hover td { background: rgba(10,108,255,0.04); }
+table.data tr.selected td { background: var(--primary-soft); }
+
+/* KPI */
+.kpi {
+  position: relative;
+  padding: 16px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.kpi::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent, var(--primary));
+  box-shadow: 0 0 12px var(--accent, var(--primary));
+}
+.kpi .label {
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.kpi .value {
+  font-family: var(--font-digit);
+  font-size: 32px;
+  color: var(--text-1);
+  margin: 6px 0 2px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+.kpi .value .unit { font-size: 14px; color: var(--text-3); margin-left: 4px; }
+.kpi .meta { font-size: 11px; color: var(--text-3); display: flex; gap: 10px; align-items: center; }
+.kpi .delta { display: inline-flex; gap: 2px; align-items: center; }
+.kpi .delta.up { color: var(--success); }
+.kpi .delta.down { color: var(--danger); }
+.kpi .spark {
+  position: absolute; right: 12px; bottom: 12px; opacity: 0.6;
+}
+
+/* Status pills */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.status-pill::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+}
+.status-pill.normal { color: var(--success); }
+.status-pill.normal::before { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.status-pill.warning { color: var(--warning); }
+.status-pill.warning::before { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+.status-pill.danger { color: var(--danger); }
+.status-pill.danger::before { background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: pulse 1.2s infinite; }
+.status-pill.offline { color: var(--text-3); }
+.status-pill.offline::before { background: var(--text-mute); }
+
+/* Search */
+.search {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg-card-hover);
+  border: 1px solid transparent;
+  color: var(--text-2);
+}
+.search:focus-within { border-color: var(--primary-border); background: var(--bg-elevated); }
+.search input {
+  background: none; border: none; outline: none;
+  width: 200px;
+  font-size: var(--fs-base);
+}
+.search input::placeholder { color: var(--text-mute); }
+
+/* Topo background grid */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(10,108,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,108,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Misc helpers */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.row { display: flex; gap: 16px; }
+.grid { display: grid; gap: 16px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-4 { margin-bottom: 16px; }
+.text-2 { color: var(--text-2); }
+.text-3 { color: var(--text-3); }
+.text-mute { color: var(--text-mute); }
+.text-sm { font-size: var(--fs-sm); }
+.text-xs { font-size: var(--fs-xs); }
+.text-digit { font-family: var(--font-digit); letter-spacing: 1px; }
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+.v-divider { width: 1px; background: var(--border); align-self: stretch; }
+
+/* Light theme tweaks for sidebar/topbar */
+:root[data-theme="light"] .sidebar {
+  background: linear-gradient(180deg, #FFFFFF, #F7F9FD);
+}
+:root[data-theme="light"] .topbar {
+  background: rgba(255,255,255,0.85);
+}
+:root[data-theme="light"] .app {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(10,108,255,0.06), transparent 60%),
+    var(--bg-base);
+}
+:root[data-theme="light"] .grid-bg {
+  background-image:
+    linear-gradient(rgba(10,108,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10,108,255,0.05) 1px, transparent 1px);
+}
+
+/* Animations */
+@keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: slideIn .25s ease both; }
+
+@keyframes flow {
+  to { stroke-dashoffset: -24; }
+}
+.flow-line { stroke-dasharray: 4 4; animation: flow 1s linear infinite; }
+
+@keyframes blink-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" data-presets="react">
+/* global React */
+// 图标库 - 简洁线性图标
+(() => {
+const { createElement: h } = React;
+
+const Icon = ({ name, size = 18, className = '', style = {} }) => {
+  const props = {
+    width: size, height: size, viewBox: '0 0 24 24',
+    fill: 'none', stroke: 'currentColor', strokeWidth: 1.6,
+    strokeLinecap: 'round', strokeLinejoin: 'round',
+    className, style,
+  };
+  const paths = ICONS[name];
+  if (!paths) return null;
+  return h('svg', props, paths.map((d, i) => h('path', { key: i, d })));
+};
+
+const ICONS = {
+  dashboard: ['M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 9h8V3h-8z'],
+  grid: ['M9 3v18M15 3v18M3 9h18M3 15h18M3 3h18v18H3z'],
+  device: ['M3 7h18M3 12h18M3 17h18', 'M7 5v14M17 5v14'],
+  load: ['M3 17l6-6 4 4 8-8M14 7h7v7'],
+  alert: ['M12 9v4M12 17h.01', 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'],
+  ticket: ['M9 11l3 3L22 4', 'M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11'],
+  report: ['M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z', 'M14 2v6h6M16 13H8M16 17H8M10 9H8'],
+  solar: ['M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41', 'M12 7a5 5 0 100 10 5 5 0 000-10z'],
+  search: ['M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35'],
+  bell: ['M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0'],
+  settings: ['M12 15a3 3 0 100-6 3 3 0 000 6z', 'M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z'],
+  user: ['M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2', 'M12 11a4 4 0 100-8 4 4 0 000 8z'],
+  chevron: ['M9 18l6-6-6-6'],
+  chevronDown: ['M6 9l6 6 6-6'],
+  download: ['M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3'],
+  refresh: ['M23 4v6h-6M1 20v-6h6', 'M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'],
+  plus: ['M12 5v14M5 12h14'],
+  more: ['M12 13a1 1 0 100-2 1 1 0 000 2zM12 6a1 1 0 100-2 1 1 0 000 2zM12 20a1 1 0 100-2 1 1 0 000 2z'],
+  power: ['M18.36 6.64a9 9 0 11-12.73 0M12 2v10'],
+  zap: ['M13 2L3 14h9l-1 8 10-12h-9l1-8z'],
+  trending: ['M23 6l-9.5 9.5-5-5L1 18', 'M17 6h6v6'],
+  trendingDown: ['M23 18l-9.5-9.5-5 5L1 6', 'M17 18h6v-6'],
+  filter: ['M22 3H2l8 9.46V19l4 2v-8.54z'],
+  expand: ['M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7'],
+  map: ['M1 6v16l7-3 8 3 7-3V3l-7 3-8-3-7 3z', 'M8 3v15M16 6v15'],
+  clock: ['M12 22a10 10 0 100-20 10 10 0 000 20z', 'M12 6v6l4 2'],
+  battery: ['M2 17h20v-10H2zM20 11v6M6 11v6'],
+  wind: ['M9.59 4.59A2 2 0 1111 8H2M12.59 19.41A2 2 0 1014 16H2M17.73 7.73A2.5 2.5 0 1119.5 12H2'],
+  check: ['M20 6L9 17l-5-5'],
+  x: ['M18 6L6 18M6 6l12 12'],
+  edit: ['M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7', 'M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z'],
+  trash: ['M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2'],
+  link: ['M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71', 'M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71'],
+  eye: ['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z', 'M12 15a3 3 0 100-6 3 3 0 000 6z'],
+  pause: ['M6 4h4v16H6zM14 4h4v16h-4z'],
+  play: ['M5 3l14 9-14 9V3z'],
+  flag: ['M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22V15'],
+  shield: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
+};
+
+window.Icon = Icon;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon */
+// 共享组件: Sidebar, Topbar, KPI, Card, Charts (sparkline, line, ring, bar)
+(() => {
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ============= 侧边栏 ============= */
+const NAV = [
+  { section: '运营监控' },
+  { id: 'dashboard', label: '调度总览', icon: 'dashboard' },
+  { id: 'devices', label: '设备管理', icon: 'device' },
+  { id: 'load', label: '负荷预测', icon: 'load' },
+  { section: '运维管理' },
+  { id: 'alerts', label: '告警事件', icon: 'alert', badge: 7 },
+  { id: 'tickets', label: '运维工单', icon: 'ticket' },
+  { section: '数据分析' },
+  { id: 'energy', label: '能耗报表', icon: 'report' },
+  { id: 'renewable', label: '新能源接入', icon: 'solar' },
+];
+
+function Sidebar({ active, onChange }) {
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-brand">
+        <div className="logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" fillOpacity="0.2"/>
+          </svg>
+        </div>
+        <div>
+          <h1>电力调度</h1>
+          <div className="sub">POWER · GRID · OS</div>
+        </div>
+      </div>
+      <nav className="nav">
+        {NAV.map((n, i) => n.section ? (
+          <div key={i} className="nav-section">{n.section}</div>
+        ) : (
+          <div key={n.id}
+               className={`nav-item ${active === n.id ? 'active' : ''}`}
+               onClick={() => onChange(n.id)}>
+            <Icon name={n.icon} className="icon" size={17} />
+            <span>{n.label}</span>
+            {n.badge ? <span className="badge">{n.badge}</span> : null}
+          </div>
+        ))}
+      </nav>
+      <div className="sidebar-user">
+        <div className="avatar">张</div>
+        <div className="user-info">
+          <div className="name">张志远</div>
+          <div className="role">主调度员 · D-401</div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* ============= 顶栏 ============= */
+const CRUMBS = {
+  dashboard: ['运营监控', '调度总览大屏'],
+  devices: ['运营监控', '设备管理'],
+  load: ['运营监控', '负荷预测与分析'],
+  alerts: ['运维管理', '告警事件中心'],
+  tickets: ['运维管理', '运维工单'],
+  energy: ['数据分析', '能耗统计报表'],
+  renewable: ['数据分析', '新能源接入'],
+};
+
+function Topbar({ active }) {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const crumb = CRUMBS[active] || [];
+  const time = now.toTimeString().slice(0, 8);
+  const date = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+  const week = ['周日','周一','周二','周三','周四','周五','周六'][now.getDay()];
+
+  return (
+    <header className="topbar">
+      <div className="crumb">
+        <span className="text-3">{crumb[0]}</span>
+        <span className="text-mute" style={{margin:'0 8px'}}>/</span>
+        <b>{crumb[1]}</b>
+      </div>
+      <span className="env-tag">PROD · 华东区</span>
+      <div className="clock">
+        <span className="status-pill normal">系统正常</span>
+        <span>{date} {week}</span>
+        <span className="time">{time}</span>
+        <div className="v-divider" style={{height:20}} />
+        <button className="icon-btn"><Icon name="refresh" size={16}/></button>
+        <button className="icon-btn"><Icon name="bell" size={16}/><span className="dot"/></button>
+        <button className="icon-btn"><Icon name="settings" size={16}/></button>
+      </div>
+    </header>
+  );
+}
+
+/* ============= Card ============= */
+function Card({ title, tag, live, actions, children, glow, className = '', noPad, headerless, style }) {
+  return (
+    <div className={`card ${glow ? 'glow' : ''} ${className}`} style={style}>
+      {glow && <div className="card-decoration"/>}
+      {!headerless && (
+        <div className="card-header">
+          <h3>{title}</h3>
+          {tag && <span className="tag">{tag}</span>}
+          {live && <span className="live-dot">实时</span>}
+          {actions && <div className="actions">{actions}</div>}
+        </div>
+      )}
+      <div className={noPad ? '' : 'card-body'}>{children}</div>
+    </div>
+  );
+}
+
+/* ============= KPI ============= */
+function KPI({ label, value, unit, delta, deltaLabel, color = 'var(--primary)', sparkData, status }) {
+  const isUp = delta != null && delta >= 0;
+  return (
+    <div className="kpi" style={{ '--accent': color }}>
+      <div className="label">{label}</div>
+      <div className="value">
+        {value}
+        {unit && <span className="unit">{unit}</span>}
+      </div>
+      <div className="meta">
+        {delta != null && (
+          <span className={`delta ${isUp ? 'up' : 'down'}`}>
+            <Icon name={isUp ? 'trending' : 'trendingDown'} size={11}/>
+            {isUp ? '+' : ''}{delta}% {deltaLabel}
+          </span>
+        )}
+        {status && <span className="chip dot" style={{color}}>{status}</span>}
+      </div>
+      {sparkData && <Sparkline data={sparkData} color={color} width={80} height={28} className="spark"/>}
+    </div>
+  );
+}
+
+/* ============= Charts ============= */
+// Sparkline
+function Sparkline({ data, color = 'var(--primary)', width = 80, height = 28, className, style }) {
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * height * 0.85 - height * 0.075;
+    return [x, y];
+  });
+  const path = points.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('');
+  const area = `${path} L${width},${height} L0,${height} Z`;
+  const id = useMemo(() => 'sp' + Math.random().toString(36).slice(2, 8), []);
+  return (
+    <svg width={width} height={height} className={className} style={style}>
+      <defs>
+        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#${id})`}/>
+      <path d={path} fill="none" stroke={color} strokeWidth="1.5"/>
+    </svg>
+  );
+}
+
+// 折线图 (多系列, 网格, 提示线)
+function LineChart({ series, labels, height = 220, yUnit = '', smooth = true, area = true, yMax: yMaxProp, showGrid = true }) {
+  const [hover, setHover] = useState(null);
+  const padL = 44, padR = 16, padT = 16, padB = 28;
+  const W = 800, H = height;
+  const allVals = series.flatMap(s => s.data);
+  const yMax = yMaxProp || Math.ceil(Math.max(...allVals) * 1.1 / 50) * 50;
+  const yMin = 0;
+  const n = labels.length;
+  const xAt = i => padL + (i / (n - 1)) * (W - padL - padR);
+  const yAt = v => padT + (1 - (v - yMin) / (yMax - yMin)) * (H - padT - padB);
+
+  const buildPath = (data, smoothed) => {
+    if (!smoothed) {
+      return data.map((v, i) => `${i ? 'L' : 'M'}${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`).join(' ');
+    }
+    let d = `M${xAt(0)},${yAt(data[0])}`;
+    for (let i = 1; i < data.length; i++) {
+      const x0 = xAt(i - 1), y0 = yAt(data[i - 1]);
+      const x1 = xAt(i), y1 = yAt(data[i]);
+      const cx1 = x0 + (x1 - x0) / 2, cy1 = y0;
+      const cx2 = x0 + (x1 - x0) / 2, cy2 = y1;
+      d += ` C${cx1},${cy1} ${cx2},${cy2} ${x1},${y1}`;
+    }
+    return d;
+  };
+
+  const yTicks = 4;
+  const ticks = Array.from({length: yTicks + 1}, (_, i) => Math.round(yMin + (yMax - yMin) * i / yTicks));
+
+  const handleMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width * W;
+    const idx = Math.round((x - padL) / (W - padL - padR) * (n - 1));
+    if (idx >= 0 && idx < n) setHover(idx);
+  };
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none"
+           onMouseMove={handleMove} onMouseLeave={() => setHover(null)}>
+        {showGrid && ticks.map((t, i) => {
+          const y = yAt(t);
+          return (
+            <g key={i}>
+              <line x1={padL} x2={W - padR} y1={y} y2={y} stroke="var(--border)" strokeDasharray="2 4"/>
+              <text x={padL - 8} y={y + 4} fontSize="10" fill="var(--text-3)" textAnchor="end">{t}{yUnit}</text>
+            </g>
+          );
+        })}
+        {labels.map((l, i) => {
+          if (i % Math.max(1, Math.floor(n / 8)) !== 0 && i !== n - 1) return null;
+          return <text key={i} x={xAt(i)} y={H - padB + 16} fontSize="10" fill="var(--text-3)" textAnchor="middle">{l}</text>;
+        })}
+        {series.map((s, si) => {
+          const p = buildPath(s.data, smooth);
+          const areaP = `${p} L${xAt(s.data.length - 1)},${H - padB} L${padL},${H - padB} Z`;
+          const id = `lc-${si}-${Math.random().toString(36).slice(2,6)}`;
+          return (
+            <g key={si}>
+              {area && (
+                <>
+                  <defs>
+                    <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor={s.color} stopOpacity={s.dashed ? 0 : 0.32}/>
+                      <stop offset="100%" stopColor={s.color} stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d={areaP} fill={`url(#${id})`}/>
+                </>
+              )}
+              <path d={p} fill="none" stroke={s.color} strokeWidth="2"
+                    strokeDasharray={s.dashed ? '4 4' : undefined}
+                    style={{filter: s.glow ? `drop-shadow(0 0 4px ${s.color})` : undefined}}/>
+            </g>
+          );
+        })}
+        {hover != null && (
+          <g>
+            <line x1={xAt(hover)} x2={xAt(hover)} y1={padT} y2={H - padB} stroke="var(--primary)" strokeDasharray="2 3" strokeWidth="1"/>
+            {series.map((s, si) => (
+              <circle key={si} cx={xAt(hover)} cy={yAt(s.data[hover])} r="4" fill={s.color} stroke="var(--bg-card)" strokeWidth="2"/>
+            ))}
+          </g>
+        )}
+      </svg>
+      {hover != null && (
+        <div style={{
+          position: 'absolute',
+          left: `${(xAt(hover) / W) * 100}%`,
+          top: 8,
+          transform: 'translateX(8px)',
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: 6,
+          padding: '8px 10px',
+          fontSize: 11,
+          pointerEvents: 'none',
+          minWidth: 120,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        }}>
+          <div className="text-3" style={{marginBottom:4}}>{labels[hover]}</div>
+          {series.map((s, si) => (
+            <div key={si} style={{display:'flex',justifyContent:'space-between',gap:8}}>
+              <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
+                <span style={{width:8,height:2,background:s.color,borderRadius:1}}/>
+                {s.name}
+              </span>
+              <b className="text-digit">{s.data[hover]}{yUnit}</b>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 柱状图
+function BarChart({ data, labels, color = 'var(--primary)', height = 180, yUnit = '' }) {
+  const padL = 36, padR = 8, padT = 12, padB = 24;
+  const W = 600, H = height;
+  const max = Math.ceil(Math.max(...data) * 1.15 / 100) * 100 || 100;
+  const xAt = i => padL + (i + 0.5) / data.length * (W - padL - padR);
+  const yAt = v => padT + (1 - v / max) * (H - padT - padB);
+  const bw = (W - padL - padR) / data.length * 0.55;
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map(t => Math.round(max * t));
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
+      {ticks.map((t,i) => (
+        <g key={i}>
+          <line x1={padL} x2={W-padR} y1={yAt(t)} y2={yAt(t)} stroke="var(--border)" strokeDasharray="2 4"/>
+          <text x={padL-6} y={yAt(t)+4} fontSize="10" fill="var(--text-3)" textAnchor="end">{t}{yUnit}</text>
+        </g>
+      ))}
+      {data.map((v, i) => {
+        const h = (H - padT - padB) * v / max;
+        const gid = `bg-${i}-${Math.random().toString(36).slice(2,6)}`;
+        return (
+          <g key={i}>
+            <defs>
+              <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity="0.95"/>
+                <stop offset="100%" stopColor={color} stopOpacity="0.25"/>
+              </linearGradient>
+            </defs>
+            <rect x={xAt(i)-bw/2} y={yAt(v)} width={bw} height={h} fill={`url(#${gid})`} rx={2}/>
+            <text x={xAt(i)} y={H-padB+15} fontSize="10" fill="var(--text-3)" textAnchor="middle">{labels[i]}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// 环形进度图
+function Ring({ percent, label, value, size = 120, color = 'var(--primary)', thickness = 8, subLabel }) {
+  const r = (size - thickness) / 2;
+  const C = 2 * Math.PI * r;
+  const offset = C * (1 - percent / 100);
+  return (
+    <div style={{position:'relative', width: size, height: size, display:'inline-block'}}>
+      <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={thickness}/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={thickness}
+                strokeDasharray={C} strokeDashoffset={offset} strokeLinecap="round"
+                style={{transition:'stroke-dashoffset .6s ease', filter: `drop-shadow(0 0 6px ${color})`}}/>
+      </svg>
+      <div style={{position:'absolute', inset:0, display:'grid', placeItems:'center', textAlign:'center'}}>
+        <div>
+          <div className="text-digit" style={{fontSize: size*0.22, color: 'var(--text-1)'}}>{value ?? percent}</div>
+          {label && <div className="text-3" style={{fontSize:11, marginTop:2}}>{label}</div>}
+          {subLabel && <div className="text-mute" style={{fontSize:10, marginTop:1}}>{subLabel}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 半圆仪表盘
+function Gauge({ percent, label, value, color = 'var(--primary)', size = 160 }) {
+  const r = 60, cx = size/2, cy = size*0.7;
+  const startAngle = -180, endAngle = 0;
+  const angle = startAngle + (endAngle - startAngle) * (percent / 100);
+  const polar = (a) => {
+    const rad = (a * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  };
+  const arc = (a1, a2) => {
+    const [x1, y1] = polar(a1), [x2, y2] = polar(a2);
+    const large = a2 - a1 > 180 ? 1 : 0;
+    return `M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2}`;
+  };
+  return (
+    <div style={{position:'relative', width:size, height: size*0.75}}>
+      <svg viewBox={`0 0 ${size} ${size*0.75}`} width="100%" height="100%">
+        <path d={arc(startAngle, endAngle)} fill="none" stroke="var(--border)" strokeWidth="10" strokeLinecap="round"/>
+        <path d={arc(startAngle, angle)} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
+              style={{filter: `drop-shadow(0 0 6px ${color})`}}/>
+      </svg>
+      <div style={{position:'absolute', inset:0, display:'grid', placeItems:'center', textAlign:'center', paddingTop:14}}>
+        <div>
+          <div className="text-digit" style={{fontSize:24, color:'var(--text-1)'}}>{value ?? percent + '%'}</div>
+          {label && <div className="text-3" style={{fontSize:11, marginTop:2}}>{label}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 数据模拟工具
+function genWave(n, base, amp, phase = 0, noise = 0.1) {
+  return Array.from({length: n}, (_, i) => {
+    const x = (i / n) * Math.PI * 2 + phase;
+    return Math.round(base + Math.sin(x) * amp + (Math.random() - 0.5) * amp * noise);
+  });
+}
+
+function useTick(interval = 2000) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick(x => x + 1), interval);
+    return () => clearInterval(t);
+  }, [interval]);
+  return tick;
+}
+
+Object.assign(window, {
+  Sidebar, Topbar, Card, KPI,
+  Sparkline, LineChart, BarChart, Ring, Gauge,
+  genWave, useTick, NAV, CRUMBS,
+});
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "palette": ["#D97757", "#29261b", "#f6f4ef"],
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        options={['#D97757', '#2A6FDB', '#1F8A5B', '#7A5AE0']}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakColor  label="Palette" value={t.palette}
+//                        options={[['#D97757', '#29261b', '#f6f4ef'],
+//                                  ['#475569', '#0f172a', '#f1f5f9']]}
+//                        onChange={(v) => setTweak('palette', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;box-sizing:border-box;width:100%;min-width:0;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;box-sizing:border-box;min-width:0;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+
+  .twk-chips{display:flex;gap:6px}
+  .twk-chip{position:relative;appearance:none;flex:1;min-width:0;height:46px;
+    padding:0;border:0;border-radius:6px;overflow:hidden;cursor:default;
+    box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.06);
+    transition:transform .12s cubic-bezier(.3,.7,.4,1),box-shadow .12s}
+  .twk-chip:hover{transform:translateY(-1px);
+    box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.12)}
+  .twk-chip[data-on="1"]{box-shadow:0 0 0 1.5px rgba(0,0,0,.85),
+    0 2px 6px rgba(0,0,0,.15)}
+  .twk-chip>span{position:absolute;top:0;bottom:0;right:0;width:34%;
+    display:flex;flex-direction:column;box-shadow:-1px 0 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i{flex:1;box-shadow:0 -1px 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i:first-child{box-shadow:none}
+  .twk-chip svg{position:absolute;top:6px;left:6px;width:13px;height:13px;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
+  // useState-style call doesn't write a "[object Object]" key into the persisted
+  // JSON block.
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+    // Same-window signal so in-page listeners (deck-stage rail thumbnails)
+    // can react — the parent message only reaches the host, not peers.
+    window.dispatchEvent(new CustomEvent('tweakchange', { detail: edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  // Auto-inject a rail toggle when a <deck-stage> is on the page. The
+  // toggle drives the deck's per-viewer _railVisible via window message;
+  // state is mirrored from the same localStorage key the deck reads so
+  // the control reflects reality across reloads. The mechanism is the
+  // message — authors who want custom placement can post it directly
+  // and pass noDeckControls to suppress this one.
+  const hasDeckStage = React.useMemo(
+    () => typeof document !== 'undefined' && !!document.querySelector('deck-stage'),
+    [],
+  );
+  // deck-stage enables its rail in connectedCallback, but this panel can
+  // mount before that element has upgraded. The initial read catches the
+  // common case; the listener covers mounting first. (Older deck-stage.js
+  // copies still wait for the host's __omelette_rail_enabled postMessage —
+  // same listener handles those.)
+  const [railEnabled, setRailEnabled] = React.useState(
+    () => hasDeckStage && !!document.querySelector('deck-stage')?._railEnabled,
+  );
+  React.useEffect(() => {
+    if (!hasDeckStage || railEnabled) return undefined;
+    const onMsg = (e) => {
+      if (e.data && e.data.type === '__omelette_rail_enabled') setRailEnabled(true);
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, [hasDeckStage, railEnabled]);
+  const [railVisible, setRailVisible] = React.useState(() => {
+    try { return localStorage.getItem('deck-stage.railVisible') !== '0'; } catch (e) { return true; }
+  });
+  const toggleRail = (on) => {
+    setRailVisible(on);
+    window.postMessage({ type: '__deck_rail_visible', on }, '*');
+  };
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-noncommentable=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">
+          {children}
+          {hasDeckStage && railEnabled && !noDeckControls && (
+            <TweakSection label="Deck">
+              <TweakToggle label="Thumbnail rail" value={railVisible} onChange={toggleRail} />
+            </TweakSection>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  // Segments wrap mid-word once per-segment width runs out. The track is
+  // ~248px (280 panel − 28 body pad − 4 seg pad), each button loses 12px
+  // to its own padding, and 11.5px system-ui averages ~6.3px/char — so 2
+  // options fit ~16 chars each, 3 fit ~10. Past that (or >3 options), fall
+  // back to a dropdown rather than wrap.
+  const labelLen = (o) => String(typeof o === 'object' ? o.label : o).length;
+  const maxLen = options.reduce((m, o) => Math.max(m, labelLen(o)), 0);
+  const fitsAsSegments = maxLen <= ({ 2: 16, 3: 10 }[options.length] ?? 0);
+  if (!fitsAsSegments) {
+    // <select> emits strings — map back to the original option value so the
+    // fallback stays type-preserving (numbers, booleans) like the segment path.
+    const resolve = (s) => {
+      const m = options.find((o) => String(typeof o === 'object' ? o.value : o) === s);
+      return m === undefined ? s : typeof m === 'object' ? m.value : m;
+    };
+    return <TweakSelect label={label} value={value} options={options}
+                        onChange={(s) => onChange(resolve(s))} />;
+  }
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+// Relative-luminance contrast pick — checkmarks drawn over a swatch need to
+// read on both #111 and #fafafa without per-option configuration. Hex input
+// only (#rgb / #rrggbb); named or rgb()/hsl() colors fall through to "light".
+function __twkIsLight(hex) {
+  const h = String(hex).replace('#', '');
+  const x = h.length === 3 ? h.replace(/./g, (c) => c + c) : h.padEnd(6, '0');
+  const n = parseInt(x.slice(0, 6), 16);
+  if (Number.isNaN(n)) return true;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return r * 299 + g * 587 + b * 114 > 148000;
+}
+
+const __TwkCheck = ({ light }) => (
+  <svg viewBox="0 0 14 14" aria-hidden="true">
+    <path d="M3 7.2 5.8 10 11 4.2" fill="none" strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round"
+          stroke={light ? 'rgba(0,0,0,.78)' : '#fff'} />
+  </svg>
+);
+
+// TweakColor — curated color/palette picker. Each option is either a single
+// hex string or an array of 1-5 hex strings; the card adapts — a lone color
+// renders solid, a palette renders colors[0] as the hero (left ~2/3) with the
+// rest stacked in a sharp column on the right. onChange emits the
+// option in the shape it was passed (string stays string, array stays array).
+// Without options it falls back to the native color input for back-compat.
+function TweakColor({ label, value, options, onChange }) {
+  if (!options || !options.length) {
+    return (
+      <div className="twk-row twk-row-h">
+        <div className="twk-lbl"><span>{label}</span></div>
+        <input type="color" className="twk-swatch" value={value}
+               onChange={(e) => onChange(e.target.value)} />
+      </div>
+    );
+  }
+  // Native <input type=color> emits lowercase hex per the HTML spec, so
+  // compare case-insensitively. String() guards JSON.stringify(undefined),
+  // which returns the primitive undefined (no .toLowerCase).
+  const key = (o) => String(JSON.stringify(o)).toLowerCase();
+  const cur = key(value);
+  return (
+    <TweakRow label={label}>
+      <div className="twk-chips" role="radiogroup">
+        {options.map((o, i) => {
+          const colors = Array.isArray(o) ? o : [o];
+          const [hero, ...rest] = colors;
+          const sup = rest.slice(0, 4);
+          const on = key(o) === cur;
+          return (
+            <button key={i} type="button" className="twk-chip" role="radio"
+                    aria-checked={on} data-on={on ? '1' : '0'}
+                    aria-label={colors.join(', ')} title={colors.join(' · ')}
+                    style={{ background: hero }}
+                    onClick={() => onChange(o)}>
+              {sup.length > 0 && (
+                <span>
+                  {sup.map((c, j) => <i key={j} style={{ background: c }} />)}
+                </span>
+              )}
+              {on && <__TwkCheck light={__twkIsLight(hero)} />}
+            </button>
+          );
+        })}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon, Card, KPI, LineChart, BarChart, Ring, Sparkline, genWave, useTick */
+// 调度总览大屏
+(() => {
+const { useState, useEffect, useMemo } = React;
+
+function DashboardScreen() {
+  const tick = useTick(3000);
+  // 实时负荷数据 (24点小时)
+  const loadData = useMemo(() => genWave(24, 1850, 380, -1, 0.06), [tick]);
+  const forecastData = useMemo(() => genWave(24, 1900, 400, -1, 0.05), []);
+  const labels = Array.from({length:24}, (_, i) => String(i).padStart(2,'0')+':00');
+
+  return (
+    <div className="dashboard-screen fade-in" style={{display:'grid', gridTemplateColumns:'280px 1fr 320px', gap:16, height:'100%'}}>
+      {/* 左侧 KPI 列 */}
+      <div style={{display:'flex', flexDirection:'column', gap:12}}>
+        <KPI label="总负荷" value={(2034 + (tick % 5) * 4).toFixed(0)} unit="MW"
+             delta={3.2} deltaLabel="同比" color="var(--primary)"
+             sparkData={loadData.slice(-12)} status="正常"/>
+        <KPI label="发电出力" value={(2142 + (tick % 3) * 3).toFixed(0)} unit="MW"
+             delta={1.8} deltaLabel="环比" color="var(--info)"
+             sparkData={genWave(12, 2100, 80, 0)}/>
+        <KPI label="新能源占比" value="34.6" unit="%"
+             delta={5.1} deltaLabel="同比" color="var(--success)"
+             sparkData={genWave(12, 32, 5, 0)}/>
+        <KPI label="网损率" value="3.82" unit="%"
+             delta={-0.4} deltaLabel="环比" color="var(--warning)"
+             sparkData={genWave(12, 3.8, 0.3, 0)}/>
+        <KPI label="频率" value="50.02" unit="Hz"
+             color="var(--teal)" status="稳定"/>
+
+        <Card title="系统稳定性" headerless noPad style={{flex:1, padding:'16px 18px'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+            <div>
+              <div className="text-3 text-xs" style={{letterSpacing:2}}>SYSTEM STABILITY</div>
+              <div style={{fontSize:13, marginTop:4, color:'var(--text-1)'}}>稳定指数</div>
+            </div>
+            <span className="chip success dot">优秀</span>
+          </div>
+          <div style={{display:'flex', justifyContent:'center', padding:'8px 0'}}>
+            <Ring percent={94} value="94" label="综合得分" subLabel="100分制" color="var(--success)" size={140}/>
+          </div>
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:8, fontSize:11}}>
+            <div className="flex" style={{justifyContent:'space-between'}}>
+              <span className="text-3">电压合格率</span><b>99.8%</b>
+            </div>
+            <div className="flex" style={{justifyContent:'space-between'}}>
+              <span className="text-3">频率合格率</span><b>100%</b>
+            </div>
+            <div className="flex" style={{justifyContent:'space-between'}}>
+              <span className="text-3">供电可靠率</span><b>99.96%</b>
+            </div>
+            <div className="flex" style={{justifyContent:'space-between'}}>
+              <span className="text-3">负荷率</span><b>72.3%</b>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* 中部 拓扑图 + 负荷曲线 */}
+      <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
+        <Card title="电网实时拓扑" tag="500kV / 220kV" live
+              actions={<>
+                <button className="btn sm ghost"><Icon name="filter" size={13}/> 筛选</button>
+                <button className="btn sm ghost"><Icon name="expand" size={13}/></button>
+              </>}
+              glow noPad style={{flex: '1 1 0', minHeight:0}}>
+          <GridTopology tick={tick}/>
+        </Card>
+        <Card title="实时负荷曲线" tag="24H" live
+              actions={<>
+                <span className="chip"><span style={{width:8,height:2,background:'var(--primary)',display:'inline-block',marginRight:4}}/>实际负荷</span>
+                <span className="chip"><span style={{width:8,height:2,background:'var(--warning)',display:'inline-block',marginRight:4, opacity:0.8}}/>预测负荷</span>
+              </>}
+              style={{flexShrink:0}}>
+          <LineChart
+            height={180}
+            labels={labels}
+            yUnit="MW"
+            series={[
+              { name: '实际负荷', data: loadData, color: '#0A6CFF', glow: true },
+              { name: '预测负荷', data: forecastData, color: '#FFAB2D', dashed: true, area: false },
+            ]}/>
+        </Card>
+      </div>
+
+      {/* 右侧 告警 + 区域负荷 + 新能源 */}
+      <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
+        <Card title="实时告警" tag="LIVE" live
+              actions={<button className="btn sm ghost">查看全部 <Icon name="chevron" size={11}/></button>}>
+          <div style={{display:'flex', flexDirection:'column', gap:8}}>
+            {ALERTS.map((a, i) => (
+              <div key={i} style={{
+                display:'flex', gap:10, padding:'10px',
+                background:'var(--bg-elevated)',
+                borderRadius:'var(--r-md)',
+                borderLeft:`3px solid var(--${a.level === 'high' ? 'danger' : a.level === 'mid' ? 'warning' : 'info'})`,
+              }}>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:8}}>
+                    <b style={{fontSize:12}}>{a.title}</b>
+                    <span className="text-mute text-xs" style={{flexShrink:0}}>{a.time}</span>
+                  </div>
+                  <div className="text-3" style={{fontSize:11, marginTop:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{a.loc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card title="区域负荷分布" tag="MW">
+          <div style={{display:'flex', flexDirection:'column', gap:10}}>
+            {AREAS.map((a, i) => (
+              <div key={i}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom:4, fontSize:12}}>
+                  <span>{a.name}</span>
+                  <span className="text-digit"><b>{a.load}</b> <span className="text-3 text-xs">/{a.cap}</span></span>
+                </div>
+                <div style={{height:6, background:'var(--bg-elevated)', borderRadius:3, overflow:'hidden'}}>
+                  <div style={{
+                    width: `${a.load/a.cap*100}%`,
+                    height:'100%',
+                    background:`linear-gradient(90deg, var(--primary), ${a.load/a.cap > 0.85 ? 'var(--warning)' : 'var(--info)'})`,
+                    boxShadow:'0 0 6px var(--primary-glow)',
+                  }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card title="新能源出力" tag="清洁能源">
+          <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, textAlign:'center'}}>
+            <RenewableMini icon="solar" label="光伏" value={485} unit="MW" color="var(--warning)"/>
+            <RenewableMini icon="wind" label="风电" value={262} unit="MW" color="var(--info)"/>
+            <RenewableMini icon="battery" label="储能" value={148} unit="MW" color="var(--success)"/>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+const ALERTS = [
+  { level: 'high', title: '#220kV 滨海线 过载告警', loc: '滨海变电站 · 14:32:08', time: '2 分钟前' },
+  { level: 'mid', title: '主变压器 #3 油温偏高', loc: '东郊变电站 · 14:28:41', time: '6 分钟前' },
+  { level: 'low', title: '光伏 12# 逆变器通讯中断', loc: '海滨光伏电站 · 14:21:33', time: '13 分钟前' },
+  { level: 'mid', title: '配电柜湿度异常', loc: '工业园 3#开关站', time: '21 分钟前' },
+];
+
+const AREAS = [
+  { name: '中心城区', load: 542, cap: 720 },
+  { name: '东部新城', load: 386, cap: 480 },
+  { name: '滨海开发区', load: 298, cap: 320 },
+  { name: '北部产业园', load: 412, cap: 580 },
+  { name: '西部新区', load: 196, cap: 280 },
+];
+
+function RenewableMini({ icon, label, value, unit, color }) {
+  return (
+    <div style={{padding:'10px 8px', background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:6, marginBottom:6, color}}>
+        <Icon name={icon} size={16}/>
+        <span style={{fontSize:11, color:'var(--text-2)'}}>{label}</span>
+      </div>
+      <div className="text-digit" style={{fontSize:22, color:'var(--text-1)'}}>{value}</div>
+      <div className="text-3 text-xs">{unit}</div>
+    </div>
+  );
+}
+
+/* ============= 电网拓扑图 ============= */
+function GridTopology({ tick }) {
+  // 5个变电站 + 节点连接
+  // 布局: 中心一个500kV枢纽,周围4个220kV变电站
+  const stations = [
+    { id: 's1', x: 50, y: 50, name: '中心枢纽', kv: '500kV', load: 1820, status: 'normal', major: true },
+    { id: 's2', x: 18, y: 22, name: '北郊变', kv: '220kV', load: 286, status: 'normal' },
+    { id: 's3', x: 82, y: 22, name: '东郊变', kv: '220kV', load: 412, status: 'warning' },
+    { id: 's4', x: 18, y: 78, name: '西郊变', kv: '220kV', load: 195, status: 'normal' },
+    { id: 's5', x: 82, y: 78, name: '滨海变', kv: '220kV', load: 524, status: 'danger' },
+    { id: 's6', x: 50, y: 12, name: '滨江发电厂', kv: '电源', load: 850, status: 'normal', src: true },
+    { id: 's7', x: 50, y: 88, name: '光伏基地', kv: '清洁', load: 485, status: 'normal', src: true },
+  ];
+
+  const lines = [
+    ['s1', 's2'], ['s1', 's3'], ['s1', 's4'], ['s1', 's5'],
+    ['s1', 's6'], ['s1', 's7'], ['s2', 's3'], ['s4', 's5'],
+  ];
+
+  const [sel, setSel] = useState('s1');
+  const selStation = stations.find(s => s.id === sel);
+
+  return (
+    <div style={{position:'relative', width:'100%', height:'100%', minHeight: 320}} className="grid-bg">
+      <svg style={{position:'absolute', inset:0, width:'100%', height:'100%'}} viewBox="0 0 100 100" preserveAspectRatio="none">
+        {/* Lines */}
+        {lines.map(([a, b], i) => {
+          const sa = stations.find(s => s.id === a);
+          const sb = stations.find(s => s.id === b);
+          const danger = sa.status === 'danger' || sb.status === 'danger';
+          const warn = sa.status === 'warning' || sb.status === 'warning';
+          const color = danger ? 'var(--danger)' : warn ? 'var(--warning)' : 'var(--primary)';
+          return (
+            <g key={i}>
+              <line x1={sa.x} y1={sa.y} x2={sb.x} y2={sb.y}
+                    stroke={color} strokeWidth="0.4" opacity="0.4" vectorEffect="non-scaling-stroke"/>
+              <line x1={sa.x} y1={sa.y} x2={sb.x} y2={sb.y}
+                    stroke={color} strokeWidth="0.5"
+                    strokeDasharray="1 1.2"
+                    className="flow-line"
+                    vectorEffect="non-scaling-stroke"
+                    style={{filter:`drop-shadow(0 0 2px ${color})`}}/>
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Stations */}
+      {stations.map(s => {
+        const colorMap = { normal: 'var(--primary)', warning: 'var(--warning)', danger: 'var(--danger)' };
+        const color = s.src ? 'var(--teal)' : colorMap[s.status];
+        const size = s.major ? 56 : s.src ? 40 : 44;
+        return (
+          <div key={s.id}
+               onClick={() => setSel(s.id)}
+               style={{
+                 position:'absolute',
+                 left:`${s.x}%`, top:`${s.y}%`,
+                 transform:'translate(-50%,-50%)',
+                 cursor:'pointer',
+                 textAlign:'center',
+                 zIndex: sel === s.id ? 10 : 2,
+               }}>
+            <div style={{
+              width:size, height:size, borderRadius: s.src ? '8px' : '50%',
+              background: `radial-gradient(circle, ${color}, transparent 70%)`,
+              border: `2px solid ${color}`,
+              boxShadow: `0 0 ${sel === s.id ? 20 : 10}px ${color}`,
+              display:'grid', placeItems:'center',
+              transition:'all .2s',
+              transform: sel === s.id ? 'scale(1.15)' : 'scale(1)',
+              backgroundColor: 'rgba(8, 17, 31, 0.8)',
+            }}>
+              <Icon name={s.src ? (s.name.includes('光伏') ? 'solar' : 'power') : 'zap'} size={s.major ? 22 : 16} style={{color}}/>
+              {s.status === 'danger' && (
+                <span style={{
+                  position:'absolute', top:-3, right:-3, width:12, height:12, borderRadius:'50%',
+                  background:'var(--danger)', boxShadow:'0 0 8px var(--danger)',
+                  animation:'pulse 1s infinite',
+                }}/>
+              )}
+            </div>
+            <div style={{
+              marginTop:6, fontSize:11, color:'var(--text-1)',
+              textShadow:'0 0 6px rgba(0,0,0,0.8)',
+              whiteSpace:'nowrap',
+            }}>
+              <b>{s.name}</b>
+              <div className="text-3 text-xs" style={{marginTop:1}}>{s.kv} · {s.load}MW</div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* 节点详情面板 */}
+      {selStation && (
+        <div style={{
+          position:'absolute', left:16, top:16,
+          background:'rgba(8, 17, 31, 0.92)',
+          border:'1px solid var(--primary-border)',
+          borderRadius:'var(--r-md)',
+          padding:'10px 12px',
+          minWidth: 200,
+          backdropFilter:'blur(10px)',
+        }}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <b>{selStation.name}</b>
+            <span className={`status-pill ${selStation.status}`}>
+              {selStation.status === 'normal' ? '正常' : selStation.status === 'warning' ? '预警' : '告警'}
+            </span>
+          </div>
+          <div className="text-3 text-xs" style={{marginTop:4}}>{selStation.kv} · #{selStation.id.toUpperCase()}</div>
+          <div className="divider"/>
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, fontSize:11}}>
+            <div><div className="text-mute">当前负载</div><b className="text-digit" style={{fontSize:16}}>{selStation.load}MW</b></div>
+            <div><div className="text-mute">负载率</div><b className="text-digit" style={{fontSize:16}}>{Math.round(selStation.load/600*100)}%</b></div>
+            <div><div className="text-mute">电压</div><b className="text-digit" style={{fontSize:16}}>{selStation.kv.includes('500') ? '525.4' : '231.2'}kV</b></div>
+            <div><div className="text-mute">电流</div><b className="text-digit" style={{fontSize:16}}>{Math.round(selStation.load * 4.2)}A</b></div>
+          </div>
+        </div>
+      )}
+
+      {/* 图例 */}
+      <div style={{
+        position:'absolute', right:16, bottom:16,
+        background:'rgba(8, 17, 31, 0.7)',
+        border:'1px solid var(--border)',
+        borderRadius:'var(--r-md)',
+        padding:'8px 12px',
+        fontSize: 11,
+        display:'flex', gap:14,
+        backdropFilter:'blur(10px)',
+      }}>
+        <span style={{display:'inline-flex', alignItems:'center', gap:5}}><span style={{width:8,height:8,borderRadius:'50%',background:'var(--primary)',boxShadow:'0 0 4px var(--primary)'}}/>正常</span>
+        <span style={{display:'inline-flex', alignItems:'center', gap:5}}><span style={{width:8,height:8,borderRadius:'50%',background:'var(--warning)',boxShadow:'0 0 4px var(--warning)'}}/>预警</span>
+        <span style={{display:'inline-flex', alignItems:'center', gap:5}}><span style={{width:8,height:8,borderRadius:'50%',background:'var(--danger)',boxShadow:'0 0 4px var(--danger)'}}/>告警</span>
+        <span style={{display:'inline-flex', alignItems:'center', gap:5}}><span style={{width:10,height:8,borderRadius:'2px',background:'var(--teal)',boxShadow:'0 0 4px var(--teal)'}}/>电源</span>
+      </div>
+    </div>
+  );
+}
+
+window.DashboardScreen = DashboardScreen;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon, Card, KPI, Ring, Sparkline, genWave */
+// 设备管理 - 变电站/线路/台账
+(() => {
+const { useState } = React;
+
+const DEVICES = [
+  { id: 'SUB-2201', name: '滨海220kV变电站', type: '变电站', voltage: '220kV', area: '滨海开发区', status: 'normal', load: 86, runtime: '8.2年', last: '2025-11-08', count: 3 },
+  { id: 'SUB-5001', name: '中心500kV枢纽站', type: '变电站', voltage: '500kV', area: '中心城区', status: 'normal', load: 72, runtime: '12.5年', last: '2025-10-22', count: 5 },
+  { id: 'SUB-2202', name: '东郊220kV变电站', type: '变电站', voltage: '220kV', area: '东部新城', status: 'warning', load: 88, runtime: '15.1年', last: '2025-08-15', count: 4 },
+  { id: 'LIN-2208', name: '滨海I线 #220', type: '输电线路', voltage: '220kV', area: '滨海开发区', status: 'danger', load: 96, runtime: '6.8年', last: '2025-09-01', count: 1 },
+  { id: 'SUB-1102', name: '工业园110kV', type: '变电站', voltage: '110kV', area: '北部产业园', status: 'normal', load: 64, runtime: '4.3年', last: '2025-11-12', count: 2 },
+  { id: 'LIN-5012', name: '主网I线 #500', type: '输电线路', voltage: '500kV', area: '骨干网络', status: 'normal', load: 75, runtime: '11.0年', last: '2025-10-30', count: 1 },
+  { id: 'TRX-3401', name: '滨海#3 主变压器', type: '变压器', voltage: '220kV', area: '滨海开发区', status: 'normal', load: 82, runtime: '8.2年', last: '2025-11-08', count: 1 },
+  { id: 'SWG-7702', name: '工业园 7#开关站', type: '开关站', voltage: '10kV', area: '北部产业园', status: 'warning', load: 78, runtime: '3.6年', last: '2025-09-20', count: 6 },
+  { id: 'SUB-2203', name: '北郊220kV变电站', type: '变电站', voltage: '220kV', area: '中心城区', status: 'normal', load: 70, runtime: '9.4年', last: '2025-10-12', count: 3 },
+  { id: 'LIN-1108', name: '园区Ⅱ线 #110', type: '输电线路', voltage: '110kV', area: '北部产业园', status: 'normal', load: 58, runtime: '5.2年', last: '2025-11-01', count: 1 },
+];
+
+const TYPES = ['全部', '变电站', '输电线路', '变压器', '开关站'];
+const VOLTAGES = ['全部', '500kV', '220kV', '110kV', '10kV'];
+
+function DevicesScreen() {
+  const [type, setType] = useState('全部');
+  const [voltage, setVoltage] = useState('全部');
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState(DEVICES[0]);
+
+  const filtered = DEVICES.filter(d =>
+    (type === '全部' || d.type === type) &&
+    (voltage === '全部' || d.voltage === voltage) &&
+    (!search || d.name.includes(search) || d.id.includes(search))
+  );
+
+  return (
+    <div className="fade-in" style={{display:'grid', gridTemplateColumns:'1fr 420px', gap:16, height:'100%'}}>
+      {/* 左: 列表 */}
+      <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
+        {/* 顶部统计 */}
+        <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12}}>
+          <KPI label="总设备数" value="1,284" unit="台" delta={4.2} deltaLabel="本月" color="var(--primary)"/>
+          <KPI label="在线运行" value="1,251" unit="台" delta={0.1} deltaLabel="同比" color="var(--success)" status="正常"/>
+          <KPI label="预警设备" value="26" unit="台" delta={-12.5} deltaLabel="本周" color="var(--warning)"/>
+          <KPI label="待维护" value="7" unit="台" color="var(--danger)" status="紧急"/>
+        </div>
+
+        {/* 筛选 + 列表 */}
+        <Card title="设备列表" tag={`共 ${filtered.length} 台`}
+              actions={<>
+                <div className="search">
+                  <Icon name="search" size={14}/>
+                  <input placeholder="搜索设备 ID / 名称" value={search} onChange={e=>setSearch(e.target.value)}/>
+                </div>
+                <button className="btn"><Icon name="filter" size={13}/> 筛选</button>
+                <button className="btn"><Icon name="download" size={13}/> 导出</button>
+                <button className="btn primary"><Icon name="plus" size={13}/> 新增</button>
+              </>}
+              noPad style={{flex:1, minHeight:0, display:'flex', flexDirection:'column'}}>
+          {/* 筛选 chips */}
+          <div style={{display:'flex', gap:16, padding:'12px 16px', borderBottom:'1px solid var(--border)', alignItems:'center'}}>
+            <div style={{display:'flex', gap:6, alignItems:'center'}}>
+              <span className="text-3 text-xs" style={{letterSpacing:1}}>类型</span>
+              {TYPES.map(t => (
+                <button key={t}
+                        onClick={() => setType(t)}
+                        className={`btn sm ${type === t ? 'primary' : 'ghost'}`}>{t}</button>
+              ))}
+            </div>
+            <div className="v-divider" style={{height:20}}/>
+            <div style={{display:'flex', gap:6, alignItems:'center'}}>
+              <span className="text-3 text-xs" style={{letterSpacing:1}}>电压</span>
+              {VOLTAGES.map(t => (
+                <button key={t}
+                        onClick={() => setVoltage(t)}
+                        className={`btn sm ${voltage === t ? 'primary' : 'ghost'}`}>{t}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{flex:1, overflowY:'auto'}}>
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>设备编号</th>
+                  <th>设备名称</th>
+                  <th>类型</th>
+                  <th>电压等级</th>
+                  <th>所属区域</th>
+                  <th>状态</th>
+                  <th>负载率</th>
+                  <th>运行年限</th>
+                  <th>最近巡检</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(d => (
+                  <tr key={d.id}
+                      className={selected?.id === d.id ? 'selected' : ''}
+                      onClick={() => setSelected(d)}
+                      style={{cursor:'pointer'}}>
+                    <td><code style={{color:'var(--info)', fontSize:11}}>{d.id}</code></td>
+                    <td><b>{d.name}</b></td>
+                    <td><span className="chip">{d.type}</span></td>
+                    <td className="text-digit">{d.voltage}</td>
+                    <td className="text-2">{d.area}</td>
+                    <td><span className={`status-pill ${d.status}`}>
+                      {d.status === 'normal' ? '正常' : d.status === 'warning' ? '预警' : '告警'}
+                    </span></td>
+                    <td>
+                      <div style={{display:'flex', alignItems:'center', gap:8}}>
+                        <div style={{flex:1, height:5, background:'var(--bg-elevated)', borderRadius:3, overflow:'hidden', minWidth:60}}>
+                          <div style={{
+                            width:`${d.load}%`, height:'100%',
+                            background: d.load > 90 ? 'var(--danger)' : d.load > 80 ? 'var(--warning)' : 'var(--primary)',
+                            boxShadow: '0 0 6px currentColor',
+                          }}/>
+                        </div>
+                        <span className="text-digit text-xs" style={{minWidth:30}}>{d.load}%</span>
+                      </div>
+                    </td>
+                    <td className="text-2">{d.runtime}</td>
+                    <td className="text-2">{d.last}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* 右: 详情面板 */}
+      <div style={{minWidth:0}}>
+        {selected && <DeviceDetail device={selected}/>}
+      </div>
+    </div>
+  );
+}
+
+function DeviceDetail({ device }) {
+  const tempData = genWave(20, 38, 4, 0);
+  const loadData = genWave(20, device.load, 8, 0);
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:12, height:'100%'}}>
+      <Card headerless noPad glow style={{padding:16}}>
+        <div className="card-decoration"/>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'start'}}>
+          <div>
+            <div className="text-3 text-xs" style={{letterSpacing:2}}>设备详情 · {device.id}</div>
+            <h2 style={{margin:'4px 0 6px', fontSize:18}}>{device.name}</h2>
+            <div style={{display:'flex', gap:6, flexWrap:'wrap'}}>
+              <span className="chip">{device.type}</span>
+              <span className="chip info">{device.voltage}</span>
+              <span className="chip">{device.area}</span>
+              <span className={`status-pill ${device.status}`}>
+                {device.status === 'normal' ? '运行正常' : device.status === 'warning' ? '预警监控' : '故障告警'}
+              </span>
+            </div>
+          </div>
+          <button className="btn icon-only ghost"><Icon name="more" size={14}/></button>
+        </div>
+
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginTop:14}}>
+          <div style={{textAlign:'center'}}>
+            <Ring percent={device.load} value={`${device.load}%`} label="负载率" size={92}
+                  color={device.load > 90 ? 'var(--danger)' : device.load > 80 ? 'var(--warning)' : 'var(--primary)'}/>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <Ring percent={88} value="38.6" label="温度°C" size={92} color="var(--info)"/>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <Ring percent={97} value="97" label="健康度" size={92} color="var(--success)"/>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="实时数据" tag="LIVE" live noPad style={{flex:1, minHeight:0, overflowY:'auto'}}>
+        <div className="card-body">
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+            {[
+              {l:'A相电压', v:'230.4', u:'kV', c:'var(--primary)'},
+              {l:'B相电压', v:'231.1', u:'kV', c:'var(--info)'},
+              {l:'C相电压', v:'229.8', u:'kV', c:'var(--teal)'},
+              {l:'有功功率', v:'412.5', u:'MW', c:'var(--primary)'},
+              {l:'无功功率', v:'68.2', u:'MVar', c:'var(--purple)'},
+              {l:'功率因数', v:'0.987', u:'', c:'var(--success)'},
+            ].map((d, i) => (
+              <div key={i} style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+                <div className="text-3 text-xs">{d.l}</div>
+                <div style={{display:'flex', alignItems:'baseline', gap:4, marginTop:2}}>
+                  <span className="text-digit" style={{fontSize:18, color:d.c}}>{d.v}</span>
+                  <span className="text-3 text-xs">{d.u}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{marginTop:14}}>
+            <div className="text-3 text-xs mb-2" style={{letterSpacing:1}}>温度趋势 · 24H</div>
+            <div style={{background:'var(--bg-elevated)', borderRadius:'var(--r-md)', padding:10}}>
+              <Sparkline data={tempData} color="var(--warning)" width={360} height={48}/>
+            </div>
+          </div>
+
+          <div style={{marginTop:12}}>
+            <div className="text-3 text-xs mb-2" style={{letterSpacing:1}}>负载趋势 · 24H</div>
+            <div style={{background:'var(--bg-elevated)', borderRadius:'var(--r-md)', padding:10}}>
+              <Sparkline data={loadData} color="var(--primary)" width={360} height={48}/>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="维护记录" tag={`${device.count} 条`} noPad>
+        <div className="card-body" style={{padding:'8px 16px 12px'}}>
+          {[
+            { date: '2025-11-08', type: '例行巡检', user: '王工', result: 'success' },
+            { date: '2025-09-15', type: '油色谱检测', user: '李工', result: 'success' },
+            { date: '2025-06-22', type: '继电保护校验', user: '陈工', result: 'success' },
+          ].map((r, i) => (
+            <div key={i} style={{
+              display:'flex', alignItems:'center', gap:10,
+              padding:'8px 0',
+              borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+            }}>
+              <div style={{
+                width:28, height:28, borderRadius:'50%',
+                background:'var(--success-soft)', color:'var(--success)',
+                display:'grid', placeItems:'center', flexShrink:0,
+              }}>
+                <Icon name="check" size={14}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <b style={{fontSize:13}}>{r.type}</b>
+                  <span className="text-3 text-xs">{r.date}</span>
+                </div>
+                <div className="text-3 text-xs" style={{marginTop:2}}>执行人: {r.user} · 结果合格</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+window.DevicesScreen = DevicesScreen;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon, Card, KPI, LineChart, BarChart, genWave */
+// 负荷预测与分析
+(() => {
+const { useState, useMemo } = React;
+
+function LoadScreen() {
+  const [range, setRange] = useState('24h');
+  const [model, setModel] = useState('LSTM-v3');
+
+  const labels24 = Array.from({length:24}, (_, i) => String(i).padStart(2,'0')+':00');
+  const actual = useMemo(() => genWave(24, 1850, 380, -1, 0.06), []);
+  const predicted = useMemo(() => genWave(24, 1900, 400, -1, 0.04), []);
+  const ai = useMemo(() => genWave(24, 1880, 390, -1, 0.03), []);
+
+  // 7天对比
+  const days = ['周一','周二','周三','周四','周五','周六','周日'];
+  const peakData = [2120, 2245, 2310, 2280, 2380, 2150, 1980];
+
+  return (
+    <div className="fade-in" style={{display:'flex', flexDirection:'column', gap:12}}>
+      {/* 顶部 KPI */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12}}>
+        <KPI label="当前负荷" value="2,041" unit="MW" delta={3.2} deltaLabel="同比" color="var(--primary)"/>
+        <KPI label="今日峰值" value="2,386" unit="MW" delta={5.8} deltaLabel="预测" color="var(--warning)"/>
+        <KPI label="今日谷值" value="1,247" unit="MW" delta={-2.1} deltaLabel="预测" color="var(--info)"/>
+        <KPI label="峰谷差" value="1,139" unit="MW" color="var(--purple)" status="正常"/>
+        <KPI label="预测准确率" value="97.8" unit="%" delta={0.4} deltaLabel="本周" color="var(--success)" status={`${model}`}/>
+      </div>
+
+      {/* 主图: 负荷预测对比 */}
+      <Card title="负荷预测对比" tag={range.toUpperCase()}
+            actions={<>
+              <div style={{display:'flex', background:'var(--bg-elevated)', borderRadius:'var(--r-sm)', padding:2}}>
+                {['24h','7d','30d'].map(r => (
+                  <button key={r}
+                          onClick={() => setRange(r)}
+                          className={`btn sm ${range === r ? 'primary' : 'ghost'}`}
+                          style={{borderRadius:3, padding:'3px 12px'}}>{r.toUpperCase()}</button>
+                ))}
+              </div>
+              <select className="btn" value={model} onChange={e=>setModel(e.target.value)} style={{padding:'5px 10px'}}>
+                <option>LSTM-v3</option>
+                <option>XGBoost-2</option>
+                <option>Prophet</option>
+              </select>
+              <button className="btn"><Icon name="refresh" size={13}/> 重新预测</button>
+              <button className="btn"><Icon name="download" size={13}/></button>
+            </>}>
+        <div style={{display:'flex', gap:16, marginBottom:8}}>
+          <Legend color="#0A6CFF" label="实际负荷" glow/>
+          <Legend color="#FFAB2D" label="传统预测" dashed/>
+          <Legend color="#2EE6D6" label="AI 预测" glow/>
+        </div>
+        <LineChart
+          height={300}
+          labels={labels24}
+          yUnit="MW"
+          series={[
+            { name: '实际负荷', data: actual, color: '#0A6CFF', glow: true },
+            { name: '传统预测', data: predicted, color: '#FFAB2D', dashed: true },
+            { name: 'AI 预测 (LSTM)', data: ai, color: '#2EE6D6', glow: true },
+          ]}/>
+      </Card>
+
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
+        <Card title="周峰值趋势" tag="WEEKLY">
+          <BarChart
+            height={220}
+            data={peakData}
+            labels={days}
+            color="var(--primary)"
+            yUnit="MW"/>
+        </Card>
+
+        <Card title="影响因子分析" tag="AI 解释">
+          <div style={{display:'flex', flexDirection:'column', gap:10}}>
+            {[
+              { label: '气温 (28°C)', impact: 86, color: 'var(--warning)', desc: '高温推高空调负荷' },
+              { label: '工作日效应', impact: 72, color: 'var(--primary)', desc: '周三工业负荷高位' },
+              { label: '节假日影响', impact: -18, color: 'var(--info)', desc: '无节假日影响' },
+              { label: '光照强度', impact: -42, color: 'var(--success)', desc: '光伏出力增加,净负荷下降' },
+              { label: '历史趋势', impact: 35, color: 'var(--purple)', desc: '同期负荷年增长 3.2%' },
+            ].map((f, i) => (
+              <div key={i}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom:4}}>
+                  <span style={{fontSize:13}}>{f.label}</span>
+                  <span style={{color: f.color, fontSize:12}} className="text-digit">
+                    {f.impact >= 0 ? '+' : ''}{f.impact}%
+                  </span>
+                </div>
+                <div style={{height:5, background:'var(--bg-elevated)', borderRadius:3, position:'relative', overflow:'hidden'}}>
+                  <div style={{
+                    position:'absolute',
+                    left: f.impact >= 0 ? '50%' : `${50 + f.impact/2}%`,
+                    width: `${Math.abs(f.impact)/2}%`,
+                    height:'100%',
+                    background: f.color,
+                    boxShadow: `0 0 6px ${f.color}`,
+                  }}/>
+                  <div style={{position:'absolute', left:'50%', top:0, bottom:0, width:1, background:'var(--border-strong)'}}/>
+                </div>
+                <div className="text-3 text-xs" style={{marginTop:3}}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card title="区域负荷热度排行" tag="实时">
+        <table className="data">
+          <thead>
+            <tr>
+              <th style={{width:40}}>#</th>
+              <th>区域</th>
+              <th>当前负荷</th>
+              <th>容量上限</th>
+              <th>负载率</th>
+              <th>较昨日</th>
+              <th>峰值预计</th>
+              <th>建议</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { rank:1, name:'滨海开发区', cur:524, cap:580, ratio:90.3, delta:8.2, peak:'18:30', adv:'建议错峰', advC: 'warning' },
+              { rank:2, name:'中心城区', cur:542, cap:720, ratio:75.3, delta:4.1, peak:'19:00', adv:'正常', advC:'success' },
+              { rank:3, name:'东部新城', cur:386, cap:480, ratio:80.4, delta:5.6, peak:'18:45', adv:'关注', advC:'info' },
+              { rank:4, name:'北部产业园', cur:412, cap:580, ratio:71.0, delta:-1.2, peak:'14:30', adv:'正常', advC:'success' },
+              { rank:5, name:'西部新区', cur:196, cap:280, ratio:70.0, delta:3.8, peak:'19:15', adv:'正常', advC:'success' },
+            ].map(r => (
+              <tr key={r.rank}>
+                <td><b className="text-digit text-3">#{r.rank}</b></td>
+                <td><b>{r.name}</b></td>
+                <td className="text-digit"><b>{r.cur}</b> <span className="text-3 text-xs">MW</span></td>
+                <td className="text-digit text-3">{r.cap} MW</td>
+                <td>
+                  <div style={{display:'flex',alignItems:'center', gap:8}}>
+                    <div style={{flex:1, maxWidth:120, height:5, background:'var(--bg-elevated)', borderRadius:3, overflow:'hidden'}}>
+                      <div style={{width:`${r.ratio}%`, height:'100%', background: r.ratio > 85 ? 'var(--warning)' : 'var(--primary)', boxShadow:'0 0 6px currentColor'}}/>
+                    </div>
+                    <span className="text-digit text-xs">{r.ratio}%</span>
+                  </div>
+                </td>
+                <td><span className={r.delta >= 0 ? 'chip warning' : 'chip success'}>{r.delta >= 0 ? '+' : ''}{r.delta}%</span></td>
+                <td className="text-digit">{r.peak}</td>
+                <td><span className={`chip ${r.advC}`}>{r.adv}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+
+function Legend({ color, label, glow, dashed }) {
+  return (
+    <span style={{display:'inline-flex', alignItems:'center', gap:6, fontSize:12, color:'var(--text-2)'}}>
+      <span style={{
+        width:16, height:2, background: color,
+        boxShadow: glow ? `0 0 6px ${color}` : 'none',
+        borderRadius:1,
+        backgroundImage: dashed ? `repeating-linear-gradient(90deg, ${color} 0 4px, transparent 4px 8px)` : undefined,
+        background: dashed ? `repeating-linear-gradient(90deg, ${color} 0 4px, transparent 4px 8px)` : color,
+      }}/>
+      {label}
+    </span>
+  );
+}
+
+window.LoadScreen = LoadScreen;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon, Card, KPI */
+// 告警与事件中心
+(() => {
+const { useState } = React;
+
+const ALL_ALERTS = [
+  { id:'A-202511130214', level:'critical', status:'active', title:'220kV 滨海I线 严重过载', loc:'滨海220kV变电站', device:'LIN-2208', value:'1,124A / 上限 1,000A', time:'14:32:08', desc:'当前电流超过额定值 12.4%, 已持续 8 分钟', op:'张志远' },
+  { id:'A-202511130212', level:'high', status:'ack', title:'主变 #3 油温偏高', loc:'东郊220kV变电站', device:'TRX-3403', value:'82.4°C / 阈值 80°C', time:'14:28:41', desc:'油温缓慢上升, 建议加强散热', op:'李明' },
+  { id:'A-202511130209', level:'mid', status:'active', title:'10kV 工业园II线 接地故障', loc:'工业园 7#开关站', device:'SWG-7702', value:'零序电流 4.6A', time:'14:21:33', desc:'检测到单相接地, 已自动隔离故障段', op:'-' },
+  { id:'A-202511130207', level:'mid', status:'resolved', title:'光伏 12# 逆变器通讯中断', loc:'海滨光伏电站', device:'INV-1012', value:'离线 6 min', time:'14:08:12', desc:'通讯已恢复, 数据采集正常', op:'王伟' },
+  { id:'A-202511130205', level:'high', status:'active', title:'配电柜湿度异常', loc:'工业园 3#开关站', device:'SWG-7703', value:'湿度 84% / 阈值 75%', time:'13:58:20', desc:'柜内湿度持续偏高, 需检查除湿装置', op:'-' },
+  { id:'A-202511130203', level:'low', status:'resolved', title:'#5 SVC 投切频繁', loc:'中心500kV枢纽站', device:'SVC-005', value:'10min 内 8次', time:'13:42:55', desc:'已切换至备用控制器', op:'李明' },
+  { id:'A-202511130201', level:'mid', status:'ack', title:'风电场 7# 风机偏航异常', loc:'东海风电场', device:'WTG-007', value:'偏航角 -15°', time:'13:36:11', desc:'风向追踪偏差, 已远程复位', op:'陈一鸣' },
+  { id:'A-202511130158', level:'critical', status:'resolved', title:'500kV 主网I线 重合闸成功', loc:'中心500kV枢纽站', device:'LIN-5012', value:'重合 1 次', time:'13:21:48', desc:'瞬时性故障, 重合闸动作正确', op:'张志远' },
+];
+
+const LEVEL_MAP = {
+  critical: { color:'var(--danger)', label:'紧急', bg:'var(--danger-soft)' },
+  high: { color:'var(--warning)', label:'重要', bg:'var(--warning-soft)' },
+  mid: { color:'var(--info)', label:'一般', bg:'var(--info-soft)' },
+  low: { color:'var(--text-3)', label:'提示', bg:'rgba(120,140,170,0.1)' },
+};
+
+const STATUS_MAP = {
+  active: { color:'var(--danger)', label:'未处理' },
+  ack: { color:'var(--warning)', label:'已确认' },
+  resolved: { color:'var(--success)', label:'已恢复' },
+};
+
+function AlertsScreen() {
+  const [filter, setFilter] = useState('all');
+  const [selected, setSelected] = useState(ALL_ALERTS[0]);
+
+  const filtered = ALL_ALERTS.filter(a =>
+    filter === 'all' ? true :
+    filter === 'active' ? a.status === 'active' :
+    filter === 'critical' ? a.level === 'critical' :
+    a.status === filter
+  );
+
+  return (
+    <div className="fade-in" style={{display:'grid', gridTemplateColumns:'1fr 460px', gap:16, height:'100%'}}>
+      <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
+        {/* KPI 行 */}
+        <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:12}}>
+          <KPI label="未处理告警" value="14" unit="条" delta={16.7} deltaLabel="同昨" color="var(--danger)" status="紧急"/>
+          <KPI label="紧急告警" value="2" unit="条" color="var(--danger)"/>
+          <KPI label="今日总计" value="86" unit="条" delta={-8.4} deltaLabel="同昨" color="var(--warning)"/>
+          <KPI label="已恢复" value="64" unit="条" delta={4.1} deltaLabel="同昨" color="var(--success)"/>
+          <KPI label="平均处理时长" value="12.4" unit="min" delta={-15.2} deltaLabel="同昨" color="var(--info)"/>
+        </div>
+
+        {/* 时间轴 + 列表 */}
+        <Card title="告警时间轴 · 24H" tag="LIVE" noPad>
+          <div style={{padding:'14px 20px'}}>
+            <AlertTimeline alerts={ALL_ALERTS}/>
+          </div>
+        </Card>
+
+        <Card title="告警列表" tag={`共 ${filtered.length}`}
+              actions={<>
+                {[
+                  {id:'all', label:'全部'},
+                  {id:'active', label:'未处理'},
+                  {id:'critical', label:'紧急'},
+                  {id:'ack', label:'已确认'},
+                  {id:'resolved', label:'已恢复'},
+                ].map(f => (
+                  <button key={f.id}
+                          onClick={() => setFilter(f.id)}
+                          className={`btn sm ${filter === f.id ? 'primary' : 'ghost'}`}>{f.label}</button>
+                ))}
+              </>}
+              noPad style={{flex:1, minHeight:0, display:'flex', flexDirection:'column'}}>
+          <div style={{flex:1, overflowY:'auto'}}>
+            <table className="data">
+              <thead>
+                <tr>
+                  <th style={{width:54}}>级别</th>
+                  <th>告警内容</th>
+                  <th>位置 / 设备</th>
+                  <th>触发值</th>
+                  <th>时间</th>
+                  <th>状态</th>
+                  <th>处理人</th>
+                  <th style={{width:100}}>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(a => {
+                  const lv = LEVEL_MAP[a.level], st = STATUS_MAP[a.status];
+                  return (
+                    <tr key={a.id} className={selected?.id === a.id ? 'selected' : ''}
+                        onClick={() => setSelected(a)} style={{cursor:'pointer'}}>
+                      <td>
+                        <span style={{
+                          display:'inline-flex', alignItems:'center', justifyContent:'center',
+                          width:36, height:22, borderRadius:4, background:lv.bg, color:lv.color, fontSize:11, fontWeight:600,
+                        }}>{lv.label}</span>
+                      </td>
+                      <td><b>{a.title}</b></td>
+                      <td className="text-2 text-sm">
+                        <div>{a.loc}</div>
+                        <code style={{fontSize:10, color:'var(--info)'}}>{a.device}</code>
+                      </td>
+                      <td className="text-digit text-sm" style={{color:lv.color}}>{a.value}</td>
+                      <td className="text-digit text-sm">{a.time}</td>
+                      <td><span className="chip dot" style={{color:st.color}}>{st.label}</span></td>
+                      <td className="text-2 text-sm">{a.op}</td>
+                      <td>
+                        <button className="btn sm">详情</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* 右: 告警详情 */}
+      <div style={{minWidth:0}}>
+        {selected && <AlertDetail alert={selected}/>}
+      </div>
+    </div>
+  );
+}
+
+function AlertTimeline({ alerts }) {
+  // 将时间 -> x 位置
+  // 假设 24H 跨度, 当前时间 14:35
+  const positions = alerts.map(a => {
+    const [h, m] = a.time.split(':').map(Number);
+    const minutes = h * 60 + m;
+    return { ...a, x: minutes };
+  });
+  const minX = 13 * 60, maxX = 15 * 60; // 关注 13:00-15:00 窗口
+  const W = 800, H = 80;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
+      {/* 主轴 */}
+      <line x1="0" x2={W} y1={H/2} y2={H/2} stroke="var(--border-strong)" strokeWidth="1"/>
+      {/* 刻度 */}
+      {Array.from({length: 13}, (_, i) => {
+        const t = minX + (maxX - minX) * i / 12;
+        const x = (t - minX) / (maxX - minX) * W;
+        const isHour = t % 60 === 0;
+        return (
+          <g key={i}>
+            <line x1={x} x2={x} y1={H/2 - (isHour ? 6 : 3)} y2={H/2 + (isHour ? 6 : 3)} stroke="var(--text-3)"/>
+            {isHour && <text x={x} y={H/2 + 22} fontSize="10" fill="var(--text-3)" textAnchor="middle">
+              {String(Math.floor(t/60)).padStart(2,'0')}:00
+            </text>}
+          </g>
+        );
+      })}
+      {/* 现在标记 */}
+      <line x1={(14*60+35-minX)/(maxX-minX)*W} x2={(14*60+35-minX)/(maxX-minX)*W} y1="6" y2={H-6}
+            stroke="var(--primary)" strokeWidth="1" strokeDasharray="2 2"/>
+      <text x={(14*60+35-minX)/(maxX-minX)*W} y={12} fontSize="10" fill="var(--primary)" textAnchor="middle">现在</text>
+      {/* 告警点 */}
+      {positions.filter(p => p.x >= minX && p.x <= maxX).map((p, i) => {
+        const x = (p.x - minX) / (maxX - minX) * W;
+        const lv = LEVEL_MAP[p.level];
+        return (
+          <g key={i}>
+            <line x1={x} x2={x} y1={H/2} y2={H/2 - 18} stroke={lv.color} strokeWidth="1" opacity="0.5"/>
+            <circle cx={x} cy={H/2 - 22} r="5" fill={lv.color} style={{filter:`drop-shadow(0 0 4px ${lv.color})`}}/>
+            <circle cx={x} cy={H/2 - 22} r="9" fill="none" stroke={lv.color} opacity="0.3"/>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function AlertDetail({ alert }) {
+  const lv = LEVEL_MAP[alert.level], st = STATUS_MAP[alert.status];
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:12, height:'100%'}}>
+      <Card headerless noPad glow style={{padding:16}}>
+        <div className="card-decoration"/>
+        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:8}}>
+          <span style={{
+            padding:'4px 10px', borderRadius:4,
+            background: lv.bg, color: lv.color, fontSize:12, fontWeight:600, letterSpacing:1,
+          }}>{lv.label}级别</span>
+          <span className="chip dot" style={{color: st.color}}>{st.label}</span>
+          <span className="text-3 text-xs" style={{marginLeft:'auto'}}>{alert.id}</span>
+        </div>
+        <h2 style={{margin:'4px 0 8px', fontSize:18}}>{alert.title}</h2>
+        <div className="text-2 text-sm" style={{lineHeight:1.6}}>{alert.desc}</div>
+
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:14, fontSize:12}}>
+          <DetailItem icon="map" label="位置" value={alert.loc}/>
+          <DetailItem icon="device" label="设备" value={alert.device} code/>
+          <DetailItem icon="alert" label="触发值" value={alert.value} highlight={lv.color}/>
+          <DetailItem icon="clock" label="触发时间" value={`今日 ${alert.time}`}/>
+          <DetailItem icon="user" label="负责人" value={alert.op}/>
+          <DetailItem icon="flag" label="持续时长" value="6 min 24 s"/>
+        </div>
+
+        <div style={{display:'flex', gap:8, marginTop:14}}>
+          <button className="btn primary" style={{flex:1}}><Icon name="check" size={14}/> 确认告警</button>
+          <button className="btn" style={{flex:1}}><Icon name="ticket" size={14}/> 派发工单</button>
+          <button className="btn icon-only"><Icon name="more" size={14}/></button>
+        </div>
+      </Card>
+
+      <Card title="处理流程" tag="FLOW" noPad style={{flex:1, minHeight:0, overflowY:'auto'}}>
+        <div className="card-body">
+          <ProcessTimeline alert={alert}/>
+        </div>
+      </Card>
+
+      <Card title="关联告警" tag="近 1H">
+        <div style={{display:'flex', flexDirection:'column', gap:6}}>
+          {ALL_ALERTS.filter(a => a.id !== alert.id).slice(0, 3).map(a => {
+            const lv = LEVEL_MAP[a.level];
+            return (
+              <div key={a.id} style={{
+                display:'flex', alignItems:'center', gap:10,
+                padding:'8px 10px',
+                background:'var(--bg-elevated)', borderRadius:'var(--r-md)',
+                borderLeft: `2px solid ${lv.color}`,
+              }}>
+                <span style={{
+                  width:6, height:6, borderRadius:'50%',
+                  background: lv.color, boxShadow: `0 0 4px ${lv.color}`, flexShrink:0,
+                }}/>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:12, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{a.title}</div>
+                  <div className="text-3 text-xs">{a.loc} · {a.time}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function DetailItem({ icon, label, value, highlight, code }) {
+  return (
+    <div style={{padding:8, background:'var(--bg-elevated)', borderRadius:'var(--r-sm)'}}>
+      <div style={{display:'flex', alignItems:'center', gap:5, color:'var(--text-3)'}}>
+        <Icon name={icon} size={12}/>
+        <span style={{fontSize:11}}>{label}</span>
+      </div>
+      <div style={{marginTop:3, color: highlight || 'var(--text-1)', fontSize:13}}>
+        {code ? <code style={{color:'var(--info)'}}>{value}</code> : value}
+      </div>
+    </div>
+  );
+}
+
+function ProcessTimeline({ alert }) {
+  const steps = [
+    { time: '14:32:08', label: '告警触发', desc: 'SCADA 自动采集异常', done: true, icon: 'alert' },
+    { time: '14:32:15', label: '智能分诊', desc: 'AI 判定为重要级别, 推送调度员', done: true, icon: 'shield' },
+    { time: alert.status !== 'active' ? '14:33:42' : '', label: '人工确认', desc: alert.status !== 'active' ? `${alert.op || '调度员'} 已确认` : '等待确认', done: alert.status !== 'active', icon: 'check' },
+    { time: alert.status === 'resolved' ? '14:38:22' : '', label: '派发工单', desc: alert.status === 'resolved' ? '已生成工单 WO-2025111313' : '待派发', done: alert.status === 'resolved', icon: 'ticket' },
+    { time: alert.status === 'resolved' ? '14:42:15' : '', label: '故障恢复', desc: alert.status === 'resolved' ? '已恢复正常运行' : '待恢复', done: alert.status === 'resolved', icon: 'shield' },
+  ];
+
+  return (
+    <div style={{position:'relative'}}>
+      {steps.map((s, i) => (
+        <div key={i} style={{display:'flex', gap:12, position:'relative', paddingBottom: i < steps.length - 1 ? 18 : 0}}>
+          {i < steps.length - 1 && (
+            <div style={{
+              position:'absolute', left:13, top:30, bottom:0, width:2,
+              background: s.done ? 'var(--success)' : 'var(--border-strong)',
+            }}/>
+          )}
+          <div style={{
+            width:28, height:28, borderRadius:'50%',
+            background: s.done ? 'var(--success-soft)' : 'var(--bg-elevated)',
+            color: s.done ? 'var(--success)' : 'var(--text-3)',
+            display:'grid', placeItems:'center',
+            flexShrink:0, zIndex:1,
+            border: s.done ? '2px solid var(--success)' : '2px solid var(--border-strong)',
+          }}>
+            <Icon name={s.icon} size={12}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{display:'flex', justifyContent:'space-between', gap:8}}>
+              <b style={{fontSize:13, color: s.done ? 'var(--text-1)' : 'var(--text-3)'}}>{s.label}</b>
+              <span className="text-3 text-xs text-digit">{s.time || '待执行'}</span>
+            </div>
+            <div className="text-3 text-xs" style={{marginTop:2}}>{s.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+window.AlertsScreen = AlertsScreen;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon, Card, KPI */
+// 运维工单流程
+(() => {
+const { useState } = React;
+
+const TICKETS = [
+  { id:'WO-20251113-014', title:'220kV 滨海I线 过载隐患处理', priority:'紧急', status:'doing', assignee:'王伟', team:'变电运维班', created:'14:35', sla:'2H', progress:35, type:'故障处理' },
+  { id:'WO-20251113-013', title:'东郊变 #3 主变油色谱检测', priority:'高', status:'pending', assignee:'李明', team:'检修班', created:'14:30', sla:'24H', progress:0, type:'例行检测' },
+  { id:'WO-20251113-012', title:'工业园 3#开关站除湿装置检查', priority:'中', status:'doing', assignee:'陈一鸣', team:'配网班', created:'14:00', sla:'8H', progress:60, type:'消缺' },
+  { id:'WO-20251113-011', title:'光伏 12# 逆变器通讯排查', priority:'中', status:'done', assignee:'王伟', team:'新能源班', created:'14:08', sla:'4H', progress:100, type:'故障处理' },
+  { id:'WO-20251113-010', title:'东海风电场 7# 风机偏航复位', priority:'中', status:'done', assignee:'刘强', team:'新能源班', created:'13:36', sla:'4H', progress:100, type:'消缺' },
+  { id:'WO-20251113-009', title:'中心枢纽站 月度巡检', priority:'低', status:'pending', assignee:'李明', team:'变电运维班', created:'09:00', sla:'72H', progress:0, type:'例行巡检' },
+  { id:'WO-20251113-008', title:'北郊变 二次设备校验', priority:'低', status:'doing', assignee:'张博', team:'继电保护班', created:'08:30', sla:'48H', progress:75, type:'例行校验' },
+];
+
+const STATUS = {
+  pending: { color:'var(--info)', label:'待处理', bg:'var(--info-soft)' },
+  doing: { color:'var(--warning)', label:'进行中', bg:'var(--warning-soft)' },
+  done: { color:'var(--success)', label:'已完成', bg:'var(--success-soft)' },
+};
+
+const PRIORITY = {
+  '紧急': 'var(--danger)',
+  '高': 'var(--warning)',
+  '中': 'var(--info)',
+  '低': 'var(--text-3)',
+};
+
+function TicketsScreen() {
+  const [view, setView] = useState('kanban');
+  const [selected, setSelected] = useState(TICKETS[0]);
+
+  return (
+    <div className="fade-in" style={{display:'flex', flexDirection:'column', gap:12, height:'100%'}}>
+      <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr) auto', gap:12, alignItems:'stretch'}}>
+        <KPI label="今日新增" value="12" unit="单" delta={20} deltaLabel="同昨" color="var(--primary)"/>
+        <KPI label="进行中" value="8" unit="单" color="var(--warning)"/>
+        <KPI label="已完成" value="34" unit="单" delta={6.3} deltaLabel="同昨" color="var(--success)"/>
+        <KPI label="平均时长" value="2.4" unit="H" delta={-12.5} deltaLabel="本周" color="var(--info)"/>
+        <KPI label="SLA 达成率" value="98.2" unit="%" delta={0.6} deltaLabel="本月" color="var(--success)" status="优秀"/>
+        <div style={{display:'flex', alignItems:'flex-end'}}>
+          <button className="btn primary" style={{height:42, padding:'0 18px'}}><Icon name="plus" size={14}/> 新建工单</button>
+        </div>
+      </div>
+
+      <Card noPad style={{flex:1, minHeight:0, display:'flex', flexDirection:'column'}}
+            title="工单看板"
+            tag="LIVE"
+            actions={<>
+              <div className="search">
+                <Icon name="search" size={13}/>
+                <input placeholder="搜索工单"/>
+              </div>
+              <div style={{display:'flex', background:'var(--bg-elevated)', borderRadius:'var(--r-sm)', padding:2}}>
+                <button onClick={()=>setView('kanban')} className={`btn sm ${view==='kanban'?'primary':'ghost'}`} style={{borderRadius:3, padding:'3px 12px'}}>看板</button>
+                <button onClick={()=>setView('list')} className={`btn sm ${view==='list'?'primary':'ghost'}`} style={{borderRadius:3, padding:'3px 12px'}}>列表</button>
+              </div>
+            </>}>
+        {view === 'kanban' ? (
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:14, padding:16, flex:1, minHeight:0}}>
+            {['pending', 'doing', 'done'].map(col => {
+              const status = STATUS[col];
+              const list = TICKETS.filter(t => t.status === col);
+              return (
+                <div key={col} style={{display:'flex', flexDirection:'column', gap:10, minHeight:0}}>
+                  <div style={{display:'flex', alignItems:'center', gap:8, padding:'6px 8px',
+                               borderRadius:'var(--r-md)', background: status.bg}}>
+                    <span style={{width:8, height:8, borderRadius:'50%', background: status.color, boxShadow:`0 0 6px ${status.color}`}}/>
+                    <b style={{color: status.color, fontSize:13, letterSpacing:1}}>{status.label}</b>
+                    <span className="text-3 text-xs" style={{marginLeft:'auto'}}>{list.length} 单</span>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'column', gap:10, overflowY:'auto', flex:1, paddingRight:4}}>
+                    {list.map(t => (
+                      <TicketCard key={t.id} t={t} active={selected?.id === t.id} onClick={() => setSelected(t)}/>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            {/* 详情侧栏可滚动 */}
+          </div>
+        ) : (
+          <div style={{overflowY:'auto', flex:1}}>
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>工单编号</th><th>标题</th><th>类型</th><th>优先级</th>
+                  <th>状态</th><th>负责人</th><th>班组</th><th>进度</th><th>创建时间</th><th>SLA</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TICKETS.map(t => (
+                  <tr key={t.id} onClick={()=>setSelected(t)} style={{cursor:'pointer'}}
+                      className={selected?.id === t.id ? 'selected' : ''}>
+                    <td><code style={{color:'var(--info)', fontSize:11}}>{t.id}</code></td>
+                    <td><b>{t.title}</b></td>
+                    <td><span className="chip">{t.type}</span></td>
+                    <td><span className="chip dot" style={{color: PRIORITY[t.priority]}}>{t.priority}</span></td>
+                    <td><span className="chip" style={{color: STATUS[t.status].color, background: STATUS[t.status].bg}}>{STATUS[t.status].label}</span></td>
+                    <td>{t.assignee}</td>
+                    <td className="text-2">{t.team}</td>
+                    <td>
+                      <div style={{display:'flex', alignItems:'center', gap:8}}>
+                        <div style={{flex:1, maxWidth:80, height:5, background:'var(--bg-elevated)', borderRadius:3, overflow:'hidden'}}>
+                          <div style={{width:`${t.progress}%`, height:'100%', background:'var(--primary)', boxShadow:'0 0 4px var(--primary-glow)'}}/>
+                        </div>
+                        <span className="text-digit text-xs">{t.progress}%</span>
+                      </div>
+                    </td>
+                    <td className="text-digit text-sm">{t.created}</td>
+                    <td><span className="chip">{t.sla}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function TicketCard({ t, active, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      padding:12,
+      background: active ? 'var(--primary-soft)' : 'var(--bg-elevated)',
+      border: `1px solid ${active ? 'var(--primary-border)' : 'var(--border)'}`,
+      borderRadius:'var(--r-md)',
+      cursor:'pointer',
+      borderLeft:`3px solid ${PRIORITY[t.priority]}`,
+      transition:'all .15s',
+    }}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'start', gap:8}}>
+        <code style={{fontSize:10, color:'var(--text-3)'}}>{t.id}</code>
+        <span style={{
+          fontSize:10, padding:'1px 6px', borderRadius:3,
+          background: `${PRIORITY[t.priority]}22`, color: PRIORITY[t.priority],
+        }}>{t.priority}</span>
+      </div>
+      <div style={{margin:'6px 0', fontSize:13, lineHeight:1.4}}>{t.title}</div>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8, fontSize:11, color:'var(--text-3)'}}>
+        <span style={{display:'inline-flex', alignItems:'center', gap:4}}>
+          <span className="avatar" style={{width:18, height:18, fontSize:9}}>{t.assignee[0]}</span>
+          <span>{t.assignee}</span>
+        </span>
+        <span style={{display:'inline-flex', alignItems:'center', gap:4}}>
+          <Icon name="clock" size={11}/>
+          {t.sla}
+        </span>
+      </div>
+      {t.progress > 0 && (
+        <div style={{marginTop:8}}>
+          <div style={{height:3, background:'var(--bg-card)', borderRadius:2, overflow:'hidden'}}>
+            <div style={{width:`${t.progress}%`, height:'100%', background:'var(--primary)', boxShadow:'0 0 4px var(--primary-glow)'}}/>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+window.TicketsScreen = TicketsScreen;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon, Card, KPI, LineChart, BarChart, Ring, Sparkline, genWave */
+// 能耗统计报表
+(() => {
+const { useState, useMemo } = React;
+
+function EnergyScreen() {
+  const [period, setPeriod] = useState('month');
+
+  const monthLabels = Array.from({length: 30}, (_, i) => String(i+1));
+  const consumption = useMemo(() => genWave(30, 4200, 800, 0, 0.08), []);
+
+  return (
+    <div className="fade-in" style={{display:'flex', flexDirection:'column', gap:12}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div style={{display:'flex', gap:8}}>
+          {[
+            {id:'day', label:'日报'},
+            {id:'week', label:'周报'},
+            {id:'month', label:'月报'},
+            {id:'quarter', label:'季报'},
+            {id:'year', label:'年报'},
+          ].map(p => (
+            <button key={p.id}
+                    onClick={()=>setPeriod(p.id)}
+                    className={`btn ${period === p.id ? 'primary' : ''}`}>{p.label}</button>
+          ))}
+        </div>
+        <div style={{display:'flex', gap:8, alignItems:'center'}}>
+          <span className="text-3 text-sm">2025年11月</span>
+          <button className="btn"><Icon name="clock" size={13}/> 选择时段</button>
+          <button className="btn"><Icon name="download" size={13}/> 导出报表</button>
+        </div>
+      </div>
+
+      {/* 概览 KPI */}
+      <div style={{display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:12}}>
+        <KPI label="供电量" value="124.6" unit="亿kWh" delta={6.4} deltaLabel="同比" color="var(--primary)" sparkData={genWave(12, 100, 20, 0)}/>
+        <KPI label="售电量" value="118.4" unit="亿kWh" delta={5.8} deltaLabel="同比" color="var(--info)" sparkData={genWave(12, 95, 18, 0)}/>
+        <KPI label="网损率" value="3.82" unit="%" delta={-0.4} deltaLabel="同比" color="var(--success)" sparkData={genWave(12, 4, 0.3, 0)}/>
+        <KPI label="清洁能源" value="42.1" unit="亿kWh" delta={18.6} deltaLabel="同比" color="var(--success)"/>
+        <KPI label="碳减排" value="3.6" unit="万吨" delta={22.4} deltaLabel="同比" color="var(--teal)" status="新能源"/>
+        <KPI label="售电收入" value="6,824" unit="万元" delta={4.2} deltaLabel="同比" color="var(--warning)"/>
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'2fr 1fr', gap:12}}>
+        <Card title="月度用电曲线" tag="kWh"
+              actions={<>
+                <span className="chip"><span style={{width:8,height:2,background:'var(--primary)',display:'inline-block',marginRight:4}}/>当月</span>
+                <span className="chip"><span style={{width:8,height:2,background:'var(--purple)',display:'inline-block',marginRight:4, opacity:0.6}}/>同期</span>
+              </>}>
+          <LineChart
+            height={240}
+            labels={monthLabels}
+            yUnit="GWh"
+            series={[
+              { name: '当月用电', data: consumption.map(v => Math.round(v/10)), color: '#0A6CFF', glow: true },
+              { name: '去年同期', data: genWave(30, 380, 60, 0, 0.06), color: '#9D7BFF', dashed: true, area: false },
+            ]}/>
+        </Card>
+
+        <Card title="用电构成" tag="行业">
+          <div style={{display:'flex', justifyContent:'center', padding:'8px 0 14px'}}>
+            <DonutChart data={[
+              { name: '工业', value: 52, color: '#0A6CFF' },
+              { name: '居民', value: 22, color: '#25C6FF' },
+              { name: '商业', value: 16, color: '#2EE6D6' },
+              { name: '农业', value: 6, color: '#9D7BFF' },
+              { name: '其他', value: 4, color: '#FFAB2D' },
+            ]}/>
+          </div>
+        </Card>
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12}}>
+        <Card title="分时段用电" tag="峰谷平">
+          <div style={{display:'flex', flexDirection:'column', gap:14, paddingTop:6}}>
+            {[
+              { label:'峰段', percent:42, val:'52.4 亿', color:'var(--warning)', desc:'09:00-12:00, 17:00-22:00' },
+              { label:'平段', percent:34, val:'42.4 亿', color:'var(--primary)', desc:'12:00-17:00, 22:00-23:00' },
+              { label:'谷段', percent:24, val:'29.8 亿', color:'var(--info)', desc:'23:00-次日09:00' },
+            ].map((d, i) => (
+              <div key={i}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom:4}}>
+                  <span style={{display:'inline-flex', alignItems:'center', gap:6}}>
+                    <span style={{width:8, height:8, borderRadius:2, background:d.color, boxShadow:`0 0 4px ${d.color}`}}/>
+                    <b style={{fontSize:13}}>{d.label}</b>
+                    <span className="text-mute text-xs">{d.percent}%</span>
+                  </span>
+                  <span className="text-digit"><b>{d.val}</b> <span className="text-3 text-xs">kWh</span></span>
+                </div>
+                <div style={{height:8, background:'var(--bg-elevated)', borderRadius:4, overflow:'hidden'}}>
+                  <div style={{
+                    width:`${d.percent}%`, height:'100%',
+                    background: `linear-gradient(90deg, ${d.color}, ${d.color}88)`,
+                    boxShadow: `0 0 8px ${d.color}`,
+                  }}/>
+                </div>
+                <div className="text-3 text-xs" style={{marginTop:3}}>{d.desc}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card title="变电站电量 TOP 5" tag="11月">
+          <BarChart
+            height={210}
+            data={[28.4, 24.6, 22.1, 18.5, 14.3]}
+            labels={['中心', '滨海', '东郊', '工业园', '北郊']}
+            color="var(--info)"
+            yUnit="亿kWh"/>
+        </Card>
+
+        <Card title="能效指标" tag="健康度">
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, padding:'8px 4px'}}>
+            <div style={{textAlign:'center'}}>
+              <Ring percent={96.18} value="96.18%" label="供电可靠率" size={100} color="var(--success)" thickness={6}/>
+            </div>
+            <div style={{textAlign:'center'}}>
+              <Ring percent={99.8} value="99.8%" label="电压合格率" size={100} color="var(--info)" thickness={6}/>
+            </div>
+            <div style={{textAlign:'center'}}>
+              <Ring percent={72.3} value="72.3%" label="设备利用率" size={100} color="var(--primary)" thickness={6}/>
+            </div>
+            <div style={{textAlign:'center'}}>
+              <Ring percent={42.1} value="42.1%" label="清洁能源占比" size={100} color="var(--teal)" thickness={6}/>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* 报表表格 */}
+      <Card title="月度统计明细" tag="2025-11">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>统计指标</th>
+              <th style={{textAlign:'right'}}>本月</th>
+              <th style={{textAlign:'right'}}>上月</th>
+              <th style={{textAlign:'right'}}>环比</th>
+              <th style={{textAlign:'right'}}>去年同期</th>
+              <th style={{textAlign:'right'}}>同比</th>
+              <th>趋势</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { name:'总供电量', cur:'124.6 亿kWh', prev:'118.2 亿kWh', mom:5.4, prevY:'117.1 亿kWh', yoy:6.4, trend: genWave(12, 100, 8, 0), color:'var(--primary)' },
+              { name:'总售电量', cur:'118.4 亿kWh', prev:'112.3 亿kWh', mom:5.4, prevY:'111.9 亿kWh', yoy:5.8, trend: genWave(12, 96, 7, 0), color:'var(--info)' },
+              { name:'线损电量', cur:'4.76 亿kWh', prev:'4.59 亿kWh', mom:3.7, prevY:'4.92 亿kWh', yoy:-3.3, trend: genWave(12, 4, 0.3, 0), color:'var(--warning)' },
+              { name:'清洁能源发电', cur:'42.1 亿kWh', prev:'38.6 亿kWh', mom:9.1, prevY:'35.5 亿kWh', yoy:18.6, trend: genWave(12, 35, 5, 0), color:'var(--success)' },
+              { name:'最大负荷', cur:'2,386 MW', prev:'2,318 MW', mom:2.9, prevY:'2,248 MW', yoy:6.1, trend: genWave(12, 2300, 100, 0), color:'var(--purple)' },
+              { name:'平均负荷率', cur:'72.3%', prev:'71.2%', mom:1.5, prevY:'69.8%', yoy:3.6, trend: genWave(12, 72, 2, 0), color:'var(--teal)' },
+            ].map(r => (
+              <tr key={r.name}>
+                <td><b>{r.name}</b></td>
+                <td className="text-digit" style={{textAlign:'right'}}>{r.cur}</td>
+                <td className="text-digit text-3" style={{textAlign:'right'}}>{r.prev}</td>
+                <td style={{textAlign:'right'}}><DeltaTag value={r.mom}/></td>
+                <td className="text-digit text-3" style={{textAlign:'right'}}>{r.prevY}</td>
+                <td style={{textAlign:'right'}}><DeltaTag value={r.yoy}/></td>
+                <td style={{width:90}}>
+                  <Sparkline data={r.trend} color={r.color} width={80} height={24}/>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+
+function DeltaTag({ value, lowerIsBetter = false }) {
+  const isUp = value >= 0;
+  const good = lowerIsBetter ? !isUp : isUp;
+  return (
+    <span style={{
+      display:'inline-flex', alignItems:'center', gap:2,
+      color: good ? 'var(--success)' : 'var(--danger)',
+      fontSize:12,
+    }}>
+      <Icon name={isUp ? 'trending' : 'trendingDown'} size={11}/>
+      <span className="text-digit">{isUp ? '+' : ''}{value}%</span>
+    </span>
+  );
+}
+
+function DonutChart({ data, size = 200 }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  const r = size/2 - 20;
+  const C = 2 * Math.PI * r;
+  let acc = 0;
+
+  return (
+    <div style={{position:'relative', width:size, height:size}}>
+      <svg width={size} height={size} style={{transform:'rotate(-90deg)'}}>
+        {data.map((d, i) => {
+          const start = acc;
+          const len = (d.value / total) * C;
+          acc += d.value;
+          return (
+            <circle key={i}
+                    cx={size/2} cy={size/2} r={r}
+                    fill="none"
+                    stroke={d.color}
+                    strokeWidth="22"
+                    strokeDasharray={`${len} ${C}`}
+                    strokeDashoffset={-(start / total) * C}
+                    style={{filter: `drop-shadow(0 0 4px ${d.color})`}}/>
+          );
+        })}
+      </svg>
+      <div style={{position:'absolute', inset:0, display:'grid', placeItems:'center', textAlign:'center'}}>
+        <div>
+          <div className="text-3 text-xs" style={{letterSpacing:1}}>累计</div>
+          <div className="text-digit" style={{fontSize:24}}>{total}</div>
+          <div className="text-3 text-xs">亿 kWh</div>
+        </div>
+      </div>
+      <div style={{position:'absolute', right:-20, top:0, display:'flex', flexDirection:'column', gap:6, fontSize:11}}>
+        {data.map((d, i) => (
+          <div key={i} style={{display:'flex', alignItems:'center', gap:6}}>
+            <span style={{width:8, height:8, background:d.color, borderRadius:2, boxShadow:`0 0 4px ${d.color}`}}/>
+            <span style={{minWidth:34}}>{d.name}</span>
+            <span className="text-digit text-3">{d.value}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+window.EnergyScreen = EnergyScreen;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, Icon, Card, KPI, LineChart, Ring, genWave, useTick */
+// 新能源接入 - 光伏/风电/储能 + 地图
+(() => {
+const { useState, useMemo } = React;
+
+const SITES = [
+  { id:'PV-001', name:'海滨光伏电站', type:'solar', x:78, y:32, cap:280, cur:212, status:'normal', region:'滨海开发区' },
+  { id:'PV-002', name:'南山光伏阵列', type:'solar', x:42, y:62, cap:185, cur:152, status:'normal', region:'南部新区' },
+  { id:'PV-003', name:'东郊农光互补', type:'solar', x:64, y:25, cap:120, cur:104, status:'warning', region:'东部新城' },
+  { id:'WD-001', name:'东海风电场', type:'wind', x:84, y:48, cap:320, cur:186, status:'normal', region:'近海风区' },
+  { id:'WD-002', name:'北山陆上风电', type:'wind', x:32, y:18, cap:180, cur:78, status:'normal', region:'北山地区' },
+  { id:'WD-003', name:'西部山地风场', type:'wind', x:14, y:54, cap:220, cur:124, status:'normal', region:'西部山区' },
+  { id:'ES-001', name:'中央储能站', type:'storage', x:50, y:48, cap:200, cur:148, status:'normal', region:'中心城区', soc:62 },
+  { id:'ES-002', name:'滨海储能电站', type:'storage', x:74, y:62, cap:120, cur:80, status:'normal', region:'滨海开发区', soc:78 },
+];
+
+const ICON_MAP = { solar:'solar', wind:'wind', storage:'battery' };
+const COLOR_MAP = { solar:'var(--warning)', wind:'var(--info)', storage:'var(--teal)' };
+const TYPE_LABEL = { solar:'光伏', wind:'风电', storage:'储能' };
+
+function RenewableScreen() {
+  const tick = useTick(2500);
+  const [type, setType] = useState('all');
+  const [selected, setSelected] = useState(SITES[3]);
+
+  const filtered = type === 'all' ? SITES : SITES.filter(s => s.type === type);
+  const totalCur = filtered.reduce((s, x) => s + x.cur, 0);
+  const totalCap = filtered.reduce((s, x) => s + x.cap, 0);
+
+  const dayLabels = Array.from({length: 24}, (_, i) => String(i).padStart(2,'0')+':00');
+  const solarCurve = useMemo(() => Array.from({length:24},(_,i)=>{
+    const t = (i - 6) / 12 * Math.PI;
+    return Math.max(0, Math.round(Math.sin(t) * 480 + (Math.random()-0.5) * 20));
+  }), [tick]);
+  const windCurve = useMemo(() => genWave(24, 240, 80, 0, 0.2).map(v => Math.max(20, v)), [tick]);
+  const storageCurve = useMemo(() => genWave(24, 0, 120, 0, 0.3), [tick]);
+
+  return (
+    <div className="fade-in" style={{display:'grid', gridTemplateColumns:'1fr 380px', gap:16, height:'100%'}}>
+      {/* 左主区: 地图 + 曲线 */}
+      <div style={{display:'flex', flexDirection:'column', gap:12, minWidth:0}}>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12}}>
+          <KPI label="清洁能源总出力" value={totalCur.toLocaleString()} unit="MW" delta={12.4} deltaLabel="同昨" color="var(--success)"/>
+          <KPI label="装机容量" value={`${(totalCap/1000).toFixed(2)}`} unit="GW" status="规划+8.5%" color="var(--teal)"/>
+          <KPI label="平均利用率" value={`${(totalCur/totalCap*100).toFixed(1)}`} unit="%" delta={2.1} deltaLabel="本月" color="var(--info)"/>
+          <KPI label="今日发电量" value="8,642" unit="MWh" delta={18.6} deltaLabel="同昨" color="var(--warning)"/>
+        </div>
+
+        <Card title="新能源场站分布" tag="GEO MAP" live
+              actions={<>
+                {[
+                  {id:'all', label:'全部', c:''},
+                  {id:'solar', label:'光伏', c:'var(--warning)'},
+                  {id:'wind', label:'风电', c:'var(--info)'},
+                  {id:'storage', label:'储能', c:'var(--teal)'},
+                ].map(t => (
+                  <button key={t.id} onClick={()=>setType(t.id)}
+                          className={`btn sm ${type === t.id ? 'primary' : 'ghost'}`}
+                          style={t.c && type === t.id ? {background:t.c, borderColor:t.c, color:'white', boxShadow:`0 0 8px ${t.c}`} : {}}>
+                    {t.label}
+                  </button>
+                ))}
+              </>}
+              glow noPad style={{flex:'1 1 0', minHeight:0}}>
+          <GeoMap sites={filtered} selected={selected} onSelect={setSelected}/>
+        </Card>
+
+        <Card title="新能源出力曲线" tag="24H" live>
+          <div style={{display:'flex', gap:14, marginBottom:8}}>
+            <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:12}}>
+              <span style={{width:14,height:2,background:'#FFAB2D'}}/>光伏
+            </span>
+            <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:12}}>
+              <span style={{width:14,height:2,background:'#25C6FF'}}/>风电
+            </span>
+            <span style={{display:'inline-flex',alignItems:'center',gap:6,fontSize:12}}>
+              <span style={{width:14,height:2,background:'#2EE6D6'}}/>储能(±)
+            </span>
+          </div>
+          <LineChart
+            height={200}
+            labels={dayLabels}
+            yUnit="MW"
+            yMax={600}
+            series={[
+              { name:'光伏', data:solarCurve, color:'#FFAB2D', glow:true },
+              { name:'风电', data:windCurve, color:'#25C6FF', glow:true },
+              { name:'储能', data:storageCurve.map(v=>v+200), color:'#2EE6D6' },
+            ]}/>
+        </Card>
+      </div>
+
+      {/* 右: 详情 */}
+      <div style={{minWidth:0, display:'flex', flexDirection:'column', gap:12}}>
+        <Card headerless noPad glow style={{padding:16}}>
+          <div className="card-decoration"/>
+          <div style={{display:'flex', alignItems:'center', gap:10}}>
+            <div style={{
+              width:42, height:42, borderRadius:'50%',
+              background: `${COLOR_MAP[selected.type]}22`,
+              border: `1px solid ${COLOR_MAP[selected.type]}`,
+              display:'grid', placeItems:'center',
+              color: COLOR_MAP[selected.type],
+              boxShadow: `0 0 12px ${COLOR_MAP[selected.type]}`,
+            }}>
+              <Icon name={ICON_MAP[selected.type]} size={20}/>
+            </div>
+            <div style={{flex:1}}>
+              <div className="text-3 text-xs">{selected.id} · {TYPE_LABEL[selected.type]}</div>
+              <h2 style={{margin:'2px 0', fontSize:16}}>{selected.name}</h2>
+              <div className="text-3 text-xs">{selected.region}</div>
+            </div>
+            <span className={`status-pill ${selected.status}`}>
+              {selected.status === 'normal' ? '正常' : '预警'}
+            </span>
+          </div>
+
+          <div style={{display:'flex', justifyContent:'center', margin:'14px 0 6px'}}>
+            <Ring percent={selected.cur/selected.cap*100} 
+                  value={selected.cur} 
+                  label="当前出力 MW"
+                  subLabel={`/ 容量 ${selected.cap}MW`}
+                  size={150}
+                  color={COLOR_MAP[selected.type]}
+                  thickness={10}/>
+          </div>
+
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10, fontSize:12}}>
+            <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+              <div className="text-3 text-xs">利用率</div>
+              <div className="text-digit" style={{fontSize:18, color:COLOR_MAP[selected.type]}}>{Math.round(selected.cur/selected.cap*100)}%</div>
+            </div>
+            <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+              <div className="text-3 text-xs">今日发电</div>
+              <div className="text-digit" style={{fontSize:18}}>{Math.round(selected.cur * 7.2)} <span className="text-3 text-xs">MWh</span></div>
+            </div>
+            {selected.type === 'storage' && (
+              <>
+                <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+                  <div className="text-3 text-xs">SOC 荷电态</div>
+                  <div className="text-digit" style={{fontSize:18, color:'var(--success)'}}>{selected.soc}%</div>
+                </div>
+                <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+                  <div className="text-3 text-xs">状态</div>
+                  <div className="text-digit" style={{fontSize:18, color:'var(--success)'}}>放电中</div>
+                </div>
+              </>
+            )}
+            {selected.type === 'solar' && (
+              <>
+                <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+                  <div className="text-3 text-xs">辐照度</div>
+                  <div className="text-digit" style={{fontSize:18, color:'var(--warning)'}}>682 <span className="text-3 text-xs">W/m²</span></div>
+                </div>
+                <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+                  <div className="text-3 text-xs">组件温度</div>
+                  <div className="text-digit" style={{fontSize:18}}>42.6°C</div>
+                </div>
+              </>
+            )}
+            {selected.type === 'wind' && (
+              <>
+                <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+                  <div className="text-3 text-xs">风速</div>
+                  <div className="text-digit" style={{fontSize:18, color:'var(--info)'}}>8.4 <span className="text-3 text-xs">m/s</span></div>
+                </div>
+                <div style={{padding:10, background:'var(--bg-elevated)', borderRadius:'var(--r-md)'}}>
+                  <div className="text-3 text-xs">在线机组</div>
+                  <div className="text-digit" style={{fontSize:18}}>34<span className="text-3 text-xs">/36</span></div>
+                </div>
+              </>
+            )}
+          </div>
+        </Card>
+
+        <Card title="近 7 日发电量" tag="MWh">
+          <div style={{display:'flex', flexDirection:'column', gap:8}}>
+            {['11.07','11.08','11.09','11.10','11.11','11.12','今日'].map((d, i) => {
+              const v = Math.round(1200 + (Math.sin(i)+1) * 600);
+              const w = v / 2400 * 100;
+              return (
+                <div key={i} style={{display:'flex', alignItems:'center', gap:10}}>
+                  <span className="text-3 text-xs" style={{width:42}}>{d}</span>
+                  <div style={{flex:1, height:14, background:'var(--bg-elevated)', borderRadius:7, overflow:'hidden', position:'relative'}}>
+                    <div style={{
+                      width:`${w}%`, height:'100%',
+                      background:`linear-gradient(90deg, ${COLOR_MAP[selected.type]}, ${COLOR_MAP[selected.type]}88)`,
+                      boxShadow:`0 0 6px ${COLOR_MAP[selected.type]}`,
+                    }}/>
+                  </div>
+                  <span className="text-digit text-sm" style={{minWidth:46, textAlign:'right'}}>{v}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function GeoMap({ sites, selected, onSelect }) {
+  return (
+    <div style={{position:'relative', width:'100%', height:'100%', minHeight: 400, background:'radial-gradient(circle at 50% 40%, rgba(10,108,255,0.08), transparent 60%)', overflow:'hidden'}}>
+      {/* 地图轮廓 SVG */}
+      <svg viewBox="0 0 100 80" preserveAspectRatio="none" style={{position:'absolute', inset:0, width:'100%', height:'100%'}}>
+        <defs>
+          <pattern id="map-grid" width="4" height="4" patternUnits="userSpaceOnUse">
+            <path d="M 4 0 L 0 0 0 4" fill="none" stroke="rgba(10,108,255,0.06)" strokeWidth="0.1"/>
+          </pattern>
+        </defs>
+        <rect width="100" height="80" fill="url(#map-grid)"/>
+        {/* 区域轮廓 */}
+        <path d="M 5 30 Q 12 12 28 14 Q 42 8 58 12 Q 72 8 84 18 Q 92 32 88 48 Q 92 60 82 70 Q 64 76 48 72 Q 32 76 20 70 Q 8 60 5 48 Z"
+              fill="rgba(10,108,255,0.04)" stroke="rgba(10,108,255,0.3)" strokeWidth="0.3"
+              vectorEffect="non-scaling-stroke"/>
+        {/* 内部分区线 */}
+        <path d="M 50 12 Q 48 40 50 70" fill="none" stroke="rgba(10,108,255,0.18)" strokeWidth="0.2" strokeDasharray="1 1" vectorEffect="non-scaling-stroke"/>
+        <path d="M 8 40 Q 48 38 90 42" fill="none" stroke="rgba(10,108,255,0.18)" strokeWidth="0.2" strokeDasharray="1 1" vectorEffect="non-scaling-stroke"/>
+        {/* 水波纹 */}
+        {sites.map(s => {
+          const color = COLOR_MAP[s.type];
+          return (
+            <g key={`r-${s.id}`}>
+              <circle cx={s.x} cy={s.y} r="1.5" fill="none" stroke={color} strokeWidth="0.2"
+                      vectorEffect="non-scaling-stroke" opacity="0.6">
+                <animate attributeName="r" from="1.5" to="6" dur="2.5s" repeatCount="indefinite" begin={`${Math.random()}s`}/>
+                <animate attributeName="opacity" from="0.6" to="0" dur="2.5s" repeatCount="indefinite" begin={`${Math.random()}s`}/>
+              </circle>
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* 区域标签 */}
+      {[
+        {x:30,y:25,name:'北区'},{x:72,y:25,name:'东北'},
+        {x:30,y:62,name:'南区'},{x:72,y:62,name:'东南'},
+      ].map((r, i) => (
+        <div key={i} style={{
+          position:'absolute', left:`${r.x}%`, top:`${r.y}%`, transform:'translate(-50%,-50%)',
+          color:'var(--text-mute)', fontSize:11, letterSpacing:2, pointerEvents:'none',
+        }}>{r.name}</div>
+      ))}
+
+      {/* 场站标记 */}
+      {sites.map(s => {
+        const color = COLOR_MAP[s.type];
+        const isSel = selected?.id === s.id;
+        return (
+          <div key={s.id}
+               onClick={()=>onSelect(s)}
+               style={{
+                 position:'absolute',
+                 left:`${s.x}%`, top:`${s.y}%`,
+                 transform:'translate(-50%,-50%)',
+                 cursor:'pointer',
+                 textAlign:'center',
+                 zIndex: isSel ? 20 : 5,
+               }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: s.type === 'storage' ? '6px' : '50%',
+              background: `radial-gradient(circle, ${color}33, transparent 70%)`,
+              border: `2px solid ${color}`,
+              boxShadow: `0 0 ${isSel ? 16 : 8}px ${color}`,
+              display:'grid', placeItems:'center', color,
+              backgroundColor:'rgba(8,17,31,0.85)',
+              transform: isSel ? 'scale(1.2)' : 'scale(1)',
+              transition:'all .2s',
+            }}>
+              <Icon name={ICON_MAP[s.type]} size={16}/>
+            </div>
+            <div style={{
+              marginTop:4, fontSize:10, color:'var(--text-1)',
+              textShadow:'0 0 6px rgba(0,0,0,0.9)',
+              whiteSpace:'nowrap', pointerEvents:'none',
+            }}>
+              <b>{s.name}</b>
+              <div className="text-3" style={{fontSize:9, marginTop:1}}>
+                <span className="text-digit" style={{color}}>{s.cur}</span>/{s.cap} MW
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* 角标实时统计 */}
+      <div style={{
+        position:'absolute', top:16, right:16,
+        background:'rgba(8,17,31,0.85)',
+        border:'1px solid var(--primary-border)',
+        borderRadius:'var(--r-md)',
+        padding:'10px 14px', minWidth:160,
+        backdropFilter:'blur(10px)', fontSize:11,
+      }}>
+        <div className="text-3 text-xs mb-2" style={{letterSpacing:2}}>实时统计</div>
+        {['solar','wind','storage'].map(t => {
+          const list = SITES.filter(s => s.type === t);
+          const cur = list.reduce((s,x)=>s+x.cur,0);
+          const cap = list.reduce((s,x)=>s+x.cap,0);
+          return (
+            <div key={t} style={{display:'flex', justifyContent:'space-between', gap:12, padding:'4px 0', borderTop: t!=='solar'?'1px dashed var(--border)':'none'}}>
+              <span style={{display:'inline-flex',alignItems:'center',gap:6, color: COLOR_MAP[t]}}>
+                <Icon name={ICON_MAP[t]} size={12}/> {TYPE_LABEL[t]}
+              </span>
+              <span><b className="text-digit">{cur}</b><span className="text-3">/{cap}MW</span></span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+window.RenewableScreen = RenewableScreen;
+})();
+  </script>
+  <script type="text/babel" data-presets="react">
+/* global React, ReactDOM, Sidebar, Topbar,
+   DashboardScreen, DevicesScreen, LoadScreen, AlertsScreen, TicketsScreen, EnergyScreen, RenewableScreen,
+   TweaksPanel, useTweaks, TweakSection, TweakColor, TweakRadio, TweakSelect */
+(() => {
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "primaryColor": "#0A6CFF",
+  "theme": "dark",
+  "density": "default",
+  "radius": "default",
+  "chartStyle": "smooth"
+}/*EDITMODE-END*/;
+
+// 颜色调色板 (HEX -> oklch hover/active 计算太复杂, 用预设主色)
+const COLOR_MAP = {
+  '#0A6CFF': { primary: '#0A6CFF', hover: '#2D85FF', active: '#0856D6', glow: 'rgba(10,108,255,0.45)', soft: 'rgba(10,108,255,0.12)', border: 'rgba(10,108,255,0.32)' },
+  '#25C6FF': { primary: '#25C6FF', hover: '#4FD4FF', active: '#0AA3DB', glow: 'rgba(37,198,255,0.5)', soft: 'rgba(37,198,255,0.14)', border: 'rgba(37,198,255,0.36)' },
+  '#2EE6D6': { primary: '#2EE6D6', hover: '#5BF0E2', active: '#13C2B2', glow: 'rgba(46,230,214,0.5)', soft: 'rgba(46,230,214,0.14)', border: 'rgba(46,230,214,0.36)' },
+  '#9D7BFF': { primary: '#9D7BFF', hover: '#B59DFF', active: '#7855E0', glow: 'rgba(157,123,255,0.5)', soft: 'rgba(157,123,255,0.14)', border: 'rgba(157,123,255,0.36)' },
+};
+
+function App() {
+  const [active, setActive] = useState('dashboard');
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // 应用主题
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-theme', t.theme);
+    root.setAttribute('data-density', t.density);
+    root.setAttribute('data-radius', t.radius);
+
+    const c = COLOR_MAP[t.primaryColor] || COLOR_MAP['#0A6CFF'];
+    root.style.setProperty('--primary', c.primary);
+    root.style.setProperty('--primary-hover', c.hover);
+    root.style.setProperty('--primary-active', c.active);
+    root.style.setProperty('--primary-glow', c.glow);
+    root.style.setProperty('--primary-soft', c.soft);
+    root.style.setProperty('--primary-border', c.border);
+    root.style.setProperty('--chart-1', c.primary);
+  }, [t]);
+
+  const Screen = {
+    dashboard: DashboardScreen,
+    devices: DevicesScreen,
+    load: LoadScreen,
+    alerts: AlertsScreen,
+    tickets: TicketsScreen,
+    energy: EnergyScreen,
+    renewable: RenewableScreen,
+  }[active] || DashboardScreen;
+
+  return (
+    <div className="app" data-screen-label={active}>
+      <Sidebar active={active} onChange={setActive}/>
+      <Topbar active={active}/>
+      <main className="main">
+        <Screen key={active}/>
+      </main>
+
+      <TweaksPanel title="Tweaks" defaultOpen={false}>
+        <TweakSection title="主色调">
+          <TweakColor
+            label="主色"
+            value={t.primaryColor}
+            onChange={v => setTweak('primaryColor', v)}
+            options={['#0A6CFF', '#25C6FF', '#2EE6D6', '#9D7BFF']}/>
+        </TweakSection>
+
+        <TweakSection title="主题">
+          <TweakRadio
+            label="深浅主题"
+            value={t.theme}
+            onChange={v => setTweak('theme', v)}
+            options={[
+              { value: 'dark', label: '深色' },
+              { value: 'light', label: '浅色' },
+            ]}/>
+        </TweakSection>
+
+        <TweakSection title="界面密度">
+          <TweakRadio
+            label="字号 / 间距"
+            value={t.density}
+            onChange={v => setTweak('density', v)}
+            options={[
+              { value: 'compact', label: '紧凑' },
+              { value: 'default', label: '标准' },
+              { value: 'comfortable', label: '宽松' },
+            ]}/>
+        </TweakSection>
+
+        <TweakSection title="圆角">
+          <TweakRadio
+            label="圆角风格"
+            value={t.radius}
+            onChange={v => setTweak('radius', v)}
+            options={[
+              { value: 'sharp', label: '直角' },
+              { value: 'default', label: '标准' },
+              { value: 'soft', label: '柔和' },
+            ]}/>
+        </TweakSection>
+
+        <TweakSection title="图表">
+          <TweakRadio
+            label="曲线样式"
+            value={t.chartStyle}
+            onChange={v => setTweak('chartStyle', v)}
+            options={[
+              { value: 'smooth', label: '平滑' },
+              { value: 'linear', label: '折线' },
+            ]}/>
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+})();
+  </script>
+</body>
+</html>
