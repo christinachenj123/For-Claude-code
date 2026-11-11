@@ -74,36 +74,46 @@ def fill(a, mask):
 
 
 def remove_boxes(a, grow=2):
-    """Remove hollow red rectangles; keep filled red things (icons, badges)."""
+    """Remove hollow red rectangles; keep filled red things (icons, badges).
+
+    Directional repair: the box line and anything outside it are copied from the background just
+    outside the box; the anti-aliased fringe inside the line is copied from just inside. Nothing is
+    averaged across the line, so a button the box hugs keeps its edge and its colour does not smear.
+    """
     m = red_mask(a)
-    boxes, kill = [], np.zeros(m.shape, bool)
-    keep = np.zeros(m.shape, bool)
+    H, W = m.shape
+    out = a.copy()
+    boxes = []
     for p in components(m):
         y1, x1 = p.min(0)
         y2, x2 = p.max(0)
         area = (x2 - x1 + 1) * (y2 - y1 + 1)
         ys, xs = p[:, 0], p[:, 1]
         edge = (np.minimum.reduce([ys - y1, y2 - ys, xs - x1, x2 - xs]) <= 4).mean()
-        if (x2 - x1) > 14 and (y2 - y1) > 10 and len(p) < 0.45 * area and edge > 0.9:
-            boxes.append([int(x1), int(y1), int(x2), int(y2)])
-            # the box line plus its anti-aliased, reddish fringe
-            H, W = m.shape
-            yy, xx = np.mgrid[0:H, 0:W]
-            d = np.minimum.reduce([np.abs(yy - y1), np.abs(yy - y2), np.abs(xx - x1), np.abs(xx - x2)])
-            inside = (yy >= y1 - 3) & (yy <= y2 + 3) & (xx >= x1 - 3) & (xx <= x2 + 3)
-            r, g, b = a[..., 0], a[..., 1], a[..., 2]
-            ring = inside & (d <= 3)
-            mm = np.zeros(m.shape, bool)
-            mm[p[:, 0], p[:, 1]] = True
-            kill |= mm | (ring & (b - g < 50))
-            # saturated UI (a button hugging the box) is kept, but not used as a fill source
-            keep |= ring & (b - g >= 50) & ~mm
-    if boxes:
-        k = dilate(kill, grow) if grow else kill
-        kept = a[keep].copy()
-        a = fill(a, k | keep)
-        a[keep] = kept
-    return a, boxes
+        if not ((x2 - x1) > 14 and (y2 - y1) > 10 and len(p) < 0.45 * area and edge > 0.9):
+            continue
+        boxes.append([int(x1), int(y1), int(x2), int(y2)])
+        lw = max(1, int(m[y1:y1 + 8, (x1 + x2) // 2].sum()))   # line width
+        inner = lw + 2                                         # line + inner fringe
+        r_, g_, b_ = a[..., 0], a[..., 1], a[..., 2]
+        reddish = dilate(m, 2) & (r_ - np.maximum(g_, b_) > 5)   # only the line and its red fringe change
+        cy = lambda v: min(H - 1, max(0, v))
+        cx = lambda v: min(W - 1, max(0, v))
+        for y in range(max(0, y1 - 3), min(H, y2 + 4)):
+            for x in range(max(0, x1 - 3), min(W, x2 + 4)):
+                d = {'t': y - y1, 'b': y2 - y, 'l': x - x1, 'r': x2 - x}
+                side = min(d, key=d.get)
+                dist = d[side]
+                if dist >= inner or dist < -3 or not reddish[y, x]:
+                    continue
+                if dist < lw:      # the line itself, and the fringe outside it → background outside
+                    k = 4
+                    src = {'t': (cy(y1 - k), x), 'b': (cy(y2 + k), x), 'l': (y, cx(x1 - k)), 'r': (y, cx(x2 + k))}[side]
+                else:              # the fringe inside the line → content just inside
+                    k = inner + 1
+                    src = {'t': (cy(y1 + k), x), 'b': (cy(y2 - k), x), 'l': (y, cx(x1 + k)), 'r': (y, cx(x2 - k))}[side]
+                out[y, x] = a[src]
+    return out, boxes
 
 
 def blur_rect(a, x1, y1, x2, y2, radius=6):

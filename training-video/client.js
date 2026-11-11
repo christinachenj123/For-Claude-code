@@ -14,7 +14,6 @@ const STAGE = { x: 40, y: 84, w: 1840, h: 820, r: 18 };
 const SUBY = 990;
 const WCX = STAGE.w / 2, WCY = STAGE.h / 2;
 const OUTLINE = ['1、下载、安装登录', '2、会话区', '3、工作区'];
-const HD = 2;   // assets/hd holds 2x screenshots
 
 // ---------- math ----------
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -39,6 +38,7 @@ function rr(g, x, y, w, h, r, fresh = true) {
 
 export function makeFilm(def) {
   const SPEED = def.speed || 1.2;
+  const HD = def.hd ? 2 : 1;   // def.hd: use the 2x screenshots in assets/hd; otherwise the originals
   const SIZES = def.sizes;   // name → [w, h]
 
   // window geometry for an image: fit inside the stage with a margin, centred
@@ -110,7 +110,7 @@ export function makeFilm(def) {
     ctx = cv.getContext('2d');
     const names = new Set(SHOTS.map((s) => s.img).concat(def.preload || []));
     await Promise.all([...names].map((n) => new Promise((res, rej) => {
-      const i = new Image(); i.onload = () => { IMG[n] = i; res(); }; i.onerror = rej; i.src = `assets/hd/${n}.png`;
+      const i = new Image(); i.onload = () => { IMG[n] = i; res(); }; i.onerror = rej; i.src = HD === 2 ? `assets/hd/${n}.png` : `assets/${n}.png`;
     })));
     const all = SUBS.map((s) => s.text).join('') + CARDS.map((c) => c.tag + c.title).join('') +
       TIPS.map((t) => t.text).join('') + OUTLINE.join('') + def.label + def.steps.join('') +
