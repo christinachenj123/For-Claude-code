@@ -52,7 +52,7 @@ function readTime(text) {
 // =====================================================================
 // Timeline
 // =====================================================================
-export const SUBS = [];   // {t0, t1, text}
+const SUBS = [];          // {t0, t1, text}, in film time
 const CARDS = [];         // section header cards
 const TIPS = [];          // yellow tip cards
 const BADGES = [];        // step numbers: {t0, t1, n, at: ()=>[x,y]}
@@ -245,7 +245,13 @@ pause(0.8);
 const tRecap = T;
 const tNext = T;
 T += 3.0;
-export const DUR = T + 0.6;
+const DUR_FILM = T + 0.6;
+const DUR = DUR_FILM;       // used by the drawing code (film time)
+
+// Whole-film speed: output time = film time / SPEED.
+const SPEED = 1.2;
+export const OUT_DUR = DUR_FILM / SPEED;
+export const OUT_SUBS = SUBS.map((x) => ({ t0: x.t0 / SPEED, t1: x.t1 / SPEED, text: x.text }));
 
 // =====================================================================
 // Assets
@@ -913,7 +919,8 @@ function drawRecap(g, t) {
 // =====================================================================
 // Frame
 // =====================================================================
-export function renderAt(t) {
+export function renderAt(tOut) {
+  const t = tOut * SPEED;
   const g = ctx;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalAlpha = 1;
