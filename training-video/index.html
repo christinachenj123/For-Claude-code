@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>苏电智伴培训视频</title>
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/noto-sans-sc/700.css">
+<style>
+  html, body { margin: 0; background: #111; overflow: hidden; }
+  canvas { display: block; }
+  #ui { position: fixed; left: 8px; bottom: 8px; color: #ddd; font: 13px sans-serif; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<div id="ui"></div>
+<script type="module">
+  import { setup, renderAt, DUR, SUBS } from './film.js';
+  await setup();
+  window.renderAt = renderAt;
+  window.DUR = DUR;
+  window.SUBS = SUBS;
+  window.READY = true;
+  // Preview: ?t=12 shows one frame, ?play plays in real time, arrow keys seek.
+  const q = new URLSearchParams(location.search);
+  if (!q.has('render')) {
+    let t = parseFloat(q.get('t') || '0'), playing = q.has('play'), last = performance.now();
+    const ui = document.getElementById('ui');
+    const tick = (now) => {
+      if (playing) t = Math.min(DUR, t + (now - last) / 1000);
+      last = now;
+      renderAt(t);
+      ui.textContent = `${t.toFixed(2)} / ${DUR.toFixed(2)} s   空格 播放/暂停  ←/→ ±1 s`;
+      requestAnimationFrame(tick);
+    };
+    addEventListener('keydown', (e) => {
+      if (e.key === ' ') playing = !playing;
+      if (e.key === 'ArrowRight') t = Math.min(DUR, t + (e.shiftKey ? 5 : 1));
+      if (e.key === 'ArrowLeft') t = Math.max(0, t - (e.shiftKey ? 5 : 1));
+    });
+    requestAnimationFrame(tick);
+  }
+</script>
+</body>
+</html>
