@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 const { chromium } = createRequire(import.meta.url)('playwright');
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
-const OUT = path.join(ROOT, 'out');
+const OUT = path.join(ROOT, 'out', (process.argv.find((a) => a.startsWith('--film=')) || '--film=1').split('=')[1]);
 const FPS = 30;
 const mode = process.argv[2] || 'video';
 const arg = process.argv[3];
@@ -26,7 +26,8 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(p).pipe(res);
 });
 await new Promise((r) => server.listen(0, r));
-const URLBASE = `http://127.0.0.1:${server.address().port}/index.html?render`;
+const FILM = (process.argv.find((a) => a.startsWith('--film=')) || '--film=1').split('=')[1];
+const URLBASE = `http://127.0.0.1:${server.address().port}/index.html?render&film=${FILM}`;
 
 const browser = await chromium.launch();
 async function openPage() {

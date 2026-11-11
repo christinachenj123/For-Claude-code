@@ -16,7 +16,8 @@
 <canvas id="c" width="1920" height="1080"></canvas>
 <div id="ui"></div>
 <script type="module">
-  import { setup, renderAt, OUT_DUR as DUR, OUT_SUBS as SUBS } from './film.js';
+  const film = new URLSearchParams(location.search).get('film') || '1';
+  const { setup, renderAt, OUT_DUR: DUR, OUT_SUBS: SUBS } = await import(film === '1' ? './film.js' : `./film${film}.js`);
   await setup();
   window.renderAt = renderAt;
   window.DUR = DUR;
