@@ -75,7 +75,7 @@ export function makeFilm(def) {
     },
     tip(t0, t1, text) { TIPS.push({ t0, t1, text }); },
     // show an image from time t: fade = crossfade time, pop = region that scales in (menus, dialogs)
-    show(t, img, o = {}) { SHOTS.push({ t, img, fade: o.fade ?? 0.3, pop: o.pop }); },
+    show(t, img, o = {}) { SHOTS.push({ t, img, fade: o.fade ?? 0.3, pop: o.pop, slide: o.slide, unslide: o.unslide }); },
     cam(t, d, img, x, y, z) { const [wx, wy] = toWorld(img, x, y); CAM.push({ t, d, cx: wx, cy: wy, z }); },
     camHome(t, d, img, z = 1) { const q = geo(img); CAM.push({ t, d, cx: q.x + q.w * q.s / 2, cy: q.y + q.h * q.s / 2, z }); },
     cur(t, d, img, x, y) { CUR.push({ t, d, img, x, y }); },
@@ -95,7 +95,7 @@ export function makeFilm(def) {
   CUR.push({ t: 0, d: 0, img: 'world', x: STAGE.w - 260, y: STAGE.h - 120 });
   def.build(api);
   const tEnd = T;
-  T += 3.0;
+  T += def.chapter >= OUTLINE.length - 1 ? 0.6 : 3.0;   // the last video has no "next section" page
   const DUR_FILM = T + 0.6;
   if (!CAM.length || CAM[0].t > 0) CAM.unshift({ t: 0, d: 0, cx: WCX, cy: WCY, z: 1 });
   SHOTS.sort((a, b) => a.t - b.t);
@@ -176,7 +176,22 @@ export function makeFilm(def) {
       drawShot(g, prev.img, 1);
       if (!sameGeo) drawFrame(g, cur.img, easeOut(k));
     } else drawFrame(g, cur.img, 1);
-    if (cur.pop && prev && k < 1) {
+    const q = geo(cur.img);
+    if ((cur.slide || cur.unslide) && prev && k < 1) {
+      // a drawer: slides in from the right edge of the window (slide), or back out (unslide)
+      const r = cur.slide || cur.unslide, inn = !!cur.slide;
+      const e = ease(k), dx = (inn ? 1 - e : e) * (r[2] - r[0]);
+      const under = inn ? prev.img : cur.img, drawer = inn ? cur.img : prev.img;
+      drawShot(g, under, 1);
+      // the rest of the window changes with a quick crossfade
+      drawShot(g, drawer, inn ? easeOut(clamp(k * 2)) : 1 - easeOut(clamp(k * 2)), r);
+      g.save();
+      g.translate(q.x, q.y); g.scale(q.s, q.s);
+      g.beginPath(); g.rect(0, 0, q.w, q.h); g.clip();
+      g.shadowColor = 'rgba(0,0,0,0.18)'; g.shadowBlur = 24;
+      g.drawImage(IMG[drawer], r[0] * HD, r[1] * HD, (r[2] - r[0]) * HD, (r[3] - r[1]) * HD, r[0] + dx, r[1], r[2] - r[0], r[3] - r[1]);
+      g.restore();
+    } else if (cur.pop && prev && k < 1) {
       // everything but the pop-up region fades fast; the pop-up scales in from its anchor
       drawShot(g, cur.img, easeOut(clamp(k * 2)), cur.pop);
       const q = geo(cur.img), r = cur.pop;
@@ -475,8 +490,10 @@ export function makeFilm(def) {
     if (t >= tStageIn - 0.2 && t < tEnd + 0.6) {
       const cam = camAt(t);
       const appear = easeOut(clamp((t - tStageIn) / 0.8));
+      const last = def.chapter >= OUTLINE.length - 1;   // the last video fades out at the end
+      const fadeOut = last ? clamp((tEnd + 0.6 - t) / 0.6) : 1;
       g.save();
-      g.globalAlpha = appear;
+      g.globalAlpha = appear * fadeOut;
       g.translate(0, (1 - appear) * 30);
       drawTopBar(g, t);
       g.save();
@@ -500,6 +517,7 @@ export function makeFilm(def) {
       g.restore();
       g.restore();
       drawSubtitle(g, t);
+      if (fadeOut < 1) { g.globalAlpha = 1 - fadeOut; g.fillStyle = C.bg; g.fillRect(0, 0, W, H); g.globalAlpha = 1; }
     }
     drawTitle(g, t);
     drawNext(g, t);

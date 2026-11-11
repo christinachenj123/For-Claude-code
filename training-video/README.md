@@ -8,12 +8,12 @@
 |---|---|---|
 | 1 | 下载、安装登录 | `deliver/01_下载安装登录.mp4`、`.srt` |
 | 2 | 会话区 | `deliver/02_会话区.mp4`、`.srt` |
-| 3 | 工作区（技能、个人知识库） | 待制作 |
+| 3 | 工作区（技能、个人知识库） | `deliver/03_工作区.mp4`、`.srt` |
 
 ## 怎么做的
 
-- `tools/preprocess.py`（第 1 支）、`tools/preprocess2.py`（第 2 支）：从截图里去掉红框、给姓名和账号打码、还原下拉菜单打开前的页面，输出到 `assets/`。
-- `film.js`：第 1 支的时间轴和画面。`client.js` 是客户端窗口类视频（第 2、3 支）的通用引擎，`film2.js` 是第 2 支的时间轴。整体按 1.2 倍速输出。每一帧只由时间 t 决定（`renderAt(t)`）。字幕停留时间按"字数 ÷ 4 + 1.5 秒、最短 2.5 秒"计算。
+- `tools/preprocess.py`（第 1 支）、`tools/preprocess2.py`（第 2 支）、`tools/preprocess3.py` + `tools/compose3.mjs`（第 3 支）：从截图里去掉红框、给姓名和账号打码、还原下拉菜单打开前的页面，输出到 `assets/`。
+- `film.js`：第 1 支的时间轴和画面。`client.js` 是客户端窗口类视频（第 2、3 支）的通用引擎，`film2.js`、`film3.js` 是第 2、3 支的时间轴。整体按 1.2 倍速输出。每一帧只由时间 t 决定（`renderAt(t)`）。字幕停留时间按"字数 ÷ 4 + 1.5 秒、最短 2.5 秒"计算。
 - `index.html`：预览页，`?film=2&t=30` 看某一帧，`?play` 实时播放。
 - `render.mjs`：无头 Chromium 逐帧截图，ffmpeg 合成 1920×1080、30 fps 的 MP4，同时导出 `.srt`。
 
