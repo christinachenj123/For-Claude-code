@@ -302,7 +302,7 @@ export async function setup() {
 const ALLTEXT = '苏电智伴（IM）使用手册第三部分常用功能1、下载、安装登录2、会话区3、工作区本节回顾下一节' +
   '提示方式一方式二数字化门户新标签页统一智能中枢微门户平台苏电IM造的一站式AI智能体研发与http://agent.js.sgcc.com.cn' +
   '从数字化门户登录进入下载通过统一智能中枢微门户平台下载安装成功后，双击【苏电IM】桌面图标，输入统一权限用户名、密码登录' +
-  '门户下载微门户下载回收站此电脑0123456789msa:/szhmh';
+  '门户下载微门户下载回收站此电脑0123456789msa:/szhmh和';
 
 // =====================================================================
 // Camera, cursor and spaces
@@ -783,7 +783,7 @@ function drawTopBar(g, t) {
   g.globalAlpha = a;
   // chapter pill
   g.font = font(26, 700); g.textBaseline = 'middle';
-  const label = '第三部分 常用功能  ›  1、下载、安装登录';
+  const label = '1、下载、安装和登录';
   const lw = g.measureText(label).width;
   rr(g, STAGE.x, 18, lw + 48, 50, 25); g.fillStyle = C.green; g.fill();
   g.fillStyle = '#FFFFFF'; g.fillText(label, STAGE.x + 24, 44);
