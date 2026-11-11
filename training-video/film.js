@@ -85,6 +85,7 @@ const WCX = 920, WCY = 410;                                              // worl
 const tTitle = 0;
 T = 7.2;
 const tStageIn = 6.6;
+const PORTAL = 'http://msa.js.sgcc.com.cn:6001/szhmh';   // 数字化门户地址
 cam(0, 0, WCX, WCY, 1);
 cur(0, 0, 'world', 1500, 700);
 
@@ -240,9 +241,8 @@ T += 3.4;
 }
 pause(0.8);
 
-// ---- 回顾 ----
+// ---- 下一节 (no recap) ----
 const tRecap = T;
-T += 6.6;
 const tNext = T;
 T += 3.0;
 export const DUR = T + 0.6;
@@ -302,7 +302,7 @@ export async function setup() {
 const ALLTEXT = '苏电智伴（IM）使用手册第三部分常用功能1、下载、安装登录2、会话区3、工作区本节回顾下一节' +
   '提示方式一方式二数字化门户新标签页统一智能中枢微门户平台苏电IM造的一站式AI智能体研发与http://agent.js.sgcc.com.cn' +
   '从数字化门户登录进入下载通过统一智能中枢微门户平台下载安装成功后，双击【苏电IM】桌面图标，输入统一权限用户名、密码登录' +
-  '门户下载微门户下载回收站此电脑0123456789';
+  '门户下载微门户下载回收站此电脑0123456789msa:/szhmh';
 
 // =====================================================================
 // Camera, cursor and spaces
@@ -419,12 +419,11 @@ function drawBrowser(g, t) {
   if (t >= tLoad) addr = URL;
   else if (t >= tType0) addr = URL.slice(0, Math.floor((t - tType0) / 0.075) + 1);
   if (t < tAddrClick) {
-    g.fillStyle = '#8A96A1'; g.fillText('🔒︎', 166, 58);
-    g.fillStyle = '#5B6875'; g.fillText('数字化门户', 190, 59);
+    g.fillStyle = '#33404C'; g.fillText(PORTAL, 168, 59);
   } else if (t < tType0) {
     // selected old address
-    g.fillStyle = '#B9D3FB'; g.fillRect(186, 49, 86, 20);
-    g.fillStyle = '#33404C'; g.fillText('数字化门户', 190, 59);
+    g.fillStyle = '#B9D3FB'; g.fillRect(165, 49, g.measureText(PORTAL).width + 6, 20);
+    g.fillStyle = '#33404C'; g.fillText(PORTAL, 168, 59);
   } else {
     g.fillText(addr, 168, 59);
     if (t < tEnter && Math.floor((t - tType0) * 2.2) % 2 === 0 || (t >= tType0 && t < tType1)) {
@@ -867,7 +866,7 @@ function drawRecap(g, t) {
   g.fillStyle = 'rgba(0,137,123,0.07)';
   g.beginPath(); g.arc(1560, 260, 420, 0, Math.PI * 2); g.fill();
   const showNext = t >= tNext;
-  if (!showNext || t < tNext + 0.4) {
+  if (tNext > tRecap && (!showNext || t < tNext + 0.4)) {
     const b = showNext ? 1 - clamp((t - tNext) / 0.4) : 1;
     g.globalAlpha = a * b;
     g.fillStyle = C.green; g.fillRect(200, 190, 10, 80);
