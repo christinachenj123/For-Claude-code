@@ -14,6 +14,7 @@ const STAGE = { x: 40, y: 84, w: 1840, h: 820, r: 18 };
 const SUBY = 990;
 const WCX = STAGE.w / 2, WCY = STAGE.h / 2;
 const OUTLINE = ['1、下载、安装登录', '2、会话区', '3、工作区'];
+const HD = 2;   // assets/hd holds 2x screenshots
 
 // ---------- math ----------
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -45,7 +46,8 @@ export function makeFilm(def) {
   function geo(name) {
     if (geoCache[name]) return geoCache[name];
     const [w, h] = SIZES[name];
-    const s = Math.min((STAGE.w - 80) / w, (STAGE.h - 24) / h);
+    // 1:1 whenever the window fits (sharpest); otherwise scale down to fit
+    const s = Math.min(1, (STAGE.w - 80) / w, (STAGE.h - 4) / h);
     return (geoCache[name] = { s, x: (STAGE.w - w * s) / 2, y: (STAGE.h - h * s) / 2, w, h });
   }
   const toWorld = (img, x, y) => {
@@ -108,7 +110,7 @@ export function makeFilm(def) {
     ctx = cv.getContext('2d');
     const names = new Set(SHOTS.map((s) => s.img).concat(def.preload || []));
     await Promise.all([...names].map((n) => new Promise((res, rej) => {
-      const i = new Image(); i.onload = () => { IMG[n] = i; res(); }; i.onerror = rej; i.src = `assets/${n}.png`;
+      const i = new Image(); i.onload = () => { IMG[n] = i; res(); }; i.onerror = rej; i.src = `assets/hd/${n}.png`;
     })));
     const all = SUBS.map((s) => s.text).join('') + CARDS.map((c) => c.tag + c.title).join('') +
       TIPS.map((t) => t.text).join('') + OUTLINE.join('') + def.label + def.steps.join('') +
@@ -150,7 +152,7 @@ export function makeFilm(def) {
       g.rect(clipOut[0], clipOut[1], clipOut[2] - clipOut[0], clipOut[3] - clipOut[1]);
       g.clip('evenodd');
     }
-    g.drawImage(im, 0, 0);
+    g.drawImage(im, 0, 0, q.w, q.h);
     g.restore();
   }
   function drawFrame(g, name, alpha) {
@@ -184,7 +186,7 @@ export function makeFilm(def) {
       g.globalAlpha = easeOut(k);
       g.translate(q.x, q.y); g.scale(q.s, q.s);
       g.translate(ax, ay); g.scale(sc, sc); g.translate(-ax, -ay);
-      g.drawImage(IMG[cur.img], r[0], r[1], r[2] - r[0], r[3] - r[1], r[0], r[1], r[2] - r[0], r[3] - r[1]);
+      g.drawImage(IMG[cur.img], r[0] * HD, r[1] * HD, (r[2] - r[0]) * HD, (r[3] - r[1]) * HD, r[0], r[1], r[2] - r[0], r[3] - r[1]);
       g.restore();
     } else {
       drawShot(g, cur.img, prev ? easeOut(k) : 1);
@@ -203,7 +205,8 @@ export function makeFilm(def) {
       if (t < e.t0 || t >= e.t1) continue;
       const q = geo(e.img);
       g.save(); g.translate(q.x, q.y); g.scale(q.s, q.s);
-      e.draw(g, t, IMG, { font, rr, prog, easeOut, clamp });
+      e.draw(g, t, IMG, { font, rr, prog, easeOut, clamp, crop: (im, sx, sy, sw, sh, dx, dy) =>
+        g.drawImage(im, sx * HD, sy * HD, sw * HD, sh * HD, dx, dy, sw, sh) });
       g.restore();
     }
   }
@@ -467,6 +470,7 @@ export function makeFilm(def) {
     const g = ctx;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.globalAlpha = 1;
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
     g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
     if (t >= tStageIn - 0.2 && t < tEnd + 0.6) {
       const cam = camAt(t);

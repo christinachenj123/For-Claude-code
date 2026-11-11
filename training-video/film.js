@@ -20,7 +20,7 @@ const STAGE = { x: 40, y: 84, w: 1840, h: 820, r: 18 };   // the "screen" area
 const SUBY = 990;                                          // subtitle centre line
 
 // Browser window inside the stage (world = stage pixels)
-const BR = { x: 203, y: 24, s: 1.06, chrome: 78, cw: 1352, ch: 651 };
+const BR = { x: 244, y: 45, s: 1.0, chrome: 78, cw: 1352, ch: 651 };   // 1:1 for sharp screenshots
 // Login window on the desktop
 const LG = { x: 411, y: 150, s: 1.45 };
 // Desktop icon
@@ -30,6 +30,13 @@ const ICON = { x: 70, y: 40, size: 78 };
 const A5 = { x: 154.0, y: 104.7, s: 0.7796 };
 const p5to4 = (x, y) => [A5.x + x * A5.s, A5.y + y * A5.s];
 const IMG3S = 1352 / 1256; // img3 is scaled to the content width
+const HD = 2;               // assets/hd holds 2x screenshots
+// drawImage in logical (1x) pixels: (x, y) | (x, y, w, h) | (sx, sy, sw, sh, dx, dy, dw, dh)
+function D(g, im, ...a) {
+  if (a.length === 2) return g.drawImage(im, a[0], a[1], im.width / HD, im.height / HD);
+  if (a.length === 4) return g.drawImage(im, ...a);
+  return g.drawImage(im, a[0] * HD, a[1] * HD, a[2] * HD, a[3] * HD, a[4], a[5], a[6], a[7]);
+}
 
 // ---------- easing ----------
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -267,7 +274,7 @@ function loadImg(src) {
 function sample(img, x, y) {
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const g = c.getContext('2d'); g.drawImage(img, 0, 0);
-  const d = g.getImageData(x, y, 1, 1).data;
+  const d = g.getImageData(x * HD, y * HD, 1, 1).data;
   return `rgb(${d[0]},${d[1]},${d[2]})`;
 }
 
@@ -276,16 +283,16 @@ export async function setup() {
   cv = document.getElementById('c');
   ctx = cv.getContext('2d');
   for (const n of ['img3', 'img4', 'img5', 'img6', 'img6_closed', 'img7', 'img7_empty'])
-    IMG[n] = await loadImg(`assets/${n}.png`);
-  BGC.img3 = sample(IMG.img3, 600, IMG.img3.height - 3);
-  BGC.img6 = sample(IMG.img6, 60, IMG.img6.height - 2);
+    IMG[n] = await loadImg(`assets/hd/${n}.png`);
+  BGC.img3 = sample(IMG.img3, 600, IMG.img3.height / HD - 3);
+  BGC.img6 = sample(IMG.img6, 60, IMG.img6.height / HD - 2);
 
   // feathered img5
   const c = document.createElement('canvas'); c.width = IMG.img5.width; c.height = IMG.img5.height;
   const g = c.getContext('2d');
   g.drawImage(IMG.img5, 0, 0);
   g.globalCompositeOperation = 'destination-in';
-  const f = 26;
+  const f = 26 * HD;
   const gx = g.createLinearGradient(0, 0, c.width, 0);
   gx.addColorStop(0, 'rgba(0,0,0,0)'); gx.addColorStop(f / c.width, '#000');
   gx.addColorStop(1 - f / c.width, '#000'); gx.addColorStop(1, 'rgba(0,0,0,0)');
@@ -296,8 +303,8 @@ export async function setup() {
   img5masked = c;
 
   // icon: the platform logo from img5's header
-  const ic = document.createElement('canvas'); ic.width = 44; ic.height = 40;
-  ic.getContext('2d').drawImage(IMG.img5, 106, 8, 44, 40, 0, 0, 44, 40);
+  const ic = document.createElement('canvas'); ic.width = 88; ic.height = 80;
+  ic.getContext('2d').drawImage(IMG.img5, 106 * HD, 8 * HD, 44 * HD, 40 * HD, 0, 0, 88, 80);
   iconImg = ic;
 
   // fonts: load every glyph the film uses
@@ -457,14 +464,13 @@ function drawContent(g, t) {
     // 方式一: portal → pop-up → menu
     if (t < tModal + 0.45) {
       g.fillStyle = BGC.img3; g.fillRect(0, 0, BR.cw, BR.ch);
-      g.drawImage(IMG.img3, 0, 0, IMG.img3.width * IMG3S, IMG.img3.height * IMG3S);
+      g.drawImage(IMG.img3, 0, 0, IMG.img3.width / HD * IMG3S, IMG.img3.height / HD * IMG3S);
     }
     if (t >= tModal) {
       const k = prog(t, tModal, 0.45);
       // background of img4 (dimmed portal) fades in, pop-up scales from the card
       g.save(); g.globalAlpha = ease(k);
-      g.drawImage(IMG.img4, 0, 0, 1352, 72, 0, 0, 1352, 72);
-      g.drawImage(IMG.img4, 0, 0);
+      D(g, IMG.img4, 0, 0);
       g.restore();
       if (k < 1) {
         // redraw the pop-up region with a scale-in on top
@@ -472,7 +478,7 @@ function drawContent(g, t) {
         const mx = 668, my = 358;
         g.save(); g.globalAlpha = ease(k);
         g.translate(mx, my); g.scale(sc, sc); g.translate(-mx, -my);
-        g.drawImage(IMG.img4, 115, 72, 1107, 579, 115, 72, 1107, 579);
+        D(g, IMG.img4, 115, 72, 1107, 579, 115, 72, 1107, 579);
         g.restore();
       }
     }
@@ -480,7 +486,7 @@ function drawContent(g, t) {
       const k = prog(t, tMenu1, 0.3);
       g.save(); g.globalAlpha = easeOut(k);
       g.translate(A5.x, A5.y); g.scale(A5.s, A5.s);
-      g.drawImage(img5masked, 0, 0);
+      g.drawImage(img5masked, 0, 0, img5masked.width / HD, img5masked.height / HD);
       g.restore();
       drawHoverRows(g, t, hoverRows1);
     }
@@ -507,7 +513,7 @@ function drawContent(g, t) {
     g.globalAlpha = easeOut(k);
     const sy = lerp(0.85, 1, easeOut(k));
     g.translate(0, r[1]); g.scale(1, sy); g.translate(0, -r[1]);
-    g.drawImage(IMG.img6, r[0], r[1], r[2] - r[0], r[3] - r[1], r[0], r[1], r[2] - r[0], r[3] - r[1]);
+    D(g, IMG.img6, r[0], r[1], r[2] - r[0], r[3] - r[1], r[0], r[1], r[2] - r[0], r[3] - r[1]);
     g.restore();
     drawHoverRows(g, t, hoverRows2);
   }
@@ -516,8 +522,9 @@ function drawContent(g, t) {
 function drawImg6(g) {
   g.fillStyle = BGC.img6; g.fillRect(0, 0, BR.cw, BR.ch);
   // let the page continue softly below the screenshot
-  g.drawImage(IMG.img6, 0, IMG.img6.height - 2, IMG.img6.width, 2, 0, IMG.img6.height, BR.cw, BR.ch);
-  g.drawImage(IMG.img6_closed, 0, 0);
+  const h6 = IMG.img6.height / HD, w6 = IMG.img6.width / HD;
+  D(g, IMG.img6, 0, h6 - 2, w6, 2, 0, h6, BR.cw, BR.ch);
+  D(g, IMG.img6_closed, 0, 0);
   // the line of text the menu covered in the screenshot
   g.save();
   g.font = font(11.2, 400); g.fillStyle = '#3B3F48'; g.textBaseline = 'alphabetic';
@@ -581,16 +588,16 @@ function drawDeskIcon(g, x, y, img, label, t, selected = false) {
 function drawLogin(g, t) {
   if (t < tLogin) return;
   const k = prog(t, tLogin, 0.4);
-  const im = IMG.img7_empty;
+  const im = IMG.img7_empty, iw = im.width / HD, ih = im.height / HD;
   g.save();
-  const cx = LG.x + im.width * LG.s / 2, cy = LG.y + im.height * LG.s / 2;
+  const cx = LG.x + iw * LG.s / 2, cy = LG.y + ih * LG.s / 2;
   const sc = lerp(0.92, 1, backOut(k));
   g.globalAlpha = easeOut(k);
   g.translate(cx, cy); g.scale(sc, sc); g.translate(-cx, -cy);
   g.translate(LG.x, LG.y); g.scale(LG.s, LG.s);
   g.save(); g.shadowColor = 'rgba(0,0,0,0.35)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
-  g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, im.width, im.height); g.restore();
-  g.drawImage(im, 0, 0);
+  g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, iw, ih); g.restore();
+  D(g, im, 0, 0);
   // field focus
   const accFocus = t >= tAcc && t < tPw, pwFocus = t >= tPw && t < tLoginClick;
   for (const [on, y] of [[accFocus, 131], [pwFocus, 201]]) {
@@ -601,14 +608,14 @@ function drawLogin(g, t) {
   if (t >= tAccType[0]) {
     const p = prog(t, tAccType[0], tAccType[1] - tAccType[0]);
     const w = Math.round(7 * p) / 7 * 82;
-    g.drawImage(IMG.img7, 386, 137, w, 28, 386, 137, w, 28);
+    if (w > 0) D(g, IMG.img7, 386, 137, w, 28, 386, 137, w, 28);
     if (accFocus && p < 1) { g.fillStyle = '#1E2933'; g.fillRect(392 + w * 0.85, 141, 1.2, 18); }
   }
   // password dots
   if (t >= tPwType[0]) {
     const p = prog(t, tPwType[0], tPwType[1] - tPwType[0]);
     const w = Math.round(11 * p) / 11 * 92;
-    g.drawImage(IMG.img7, 390, 207, w, 27, 390, 207, w, 27);
+    if (w > 0) D(g, IMG.img7, 390, 207, w, 27, 390, 207, w, 27);
   }
   // button press
   if (t >= tLoginClick && t < tLoginClick + 0.25) {
@@ -923,6 +930,7 @@ export function renderAt(tOut) {
   const t = tOut * SPEED;
   const g = ctx;
   g.setTransform(1, 0, 0, 1, 0, 0);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
   g.globalAlpha = 1;
   g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
 

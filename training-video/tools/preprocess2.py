@@ -95,3 +95,41 @@ client('image18.png', 'img18')
 
 json.dump(boxes, open(os.path.join(OUT, 'boxes2.json'), 'w'), indent=1)
 print(json.dumps(boxes))
+
+# ---------------- 联网检索 screenshots (sent later, higher resolution) ----------------
+# web4: safety prompt over a dimmed page; web3: answer after a web search; web2: quota-exhausted prompt;
+# web1 is the same as image15 (user centre).
+def web_clean(a):
+    a, b = remove_boxes(a)
+    a = blur_rect(a, 1232, 4, 1360, 34, 8)                       # user name
+    m = np.zeros(a.shape[:2], bool); m[660:704, 1180:1350] = True  # "激活 Windows"
+    return fill(a, m), b
+
+w4, boxes['web4'] = web_clean(load('web4.png'))
+save(w4, 'web4.png')
+w3, boxes['web3'] = web_clean(load('web3.png'))
+save(w3, 'web3.png')
+w2 = load('web2.png')
+w2 = blur_rect(w2, 788, 8, 960, 48, 9)
+save(w2, 'web2.png')
+
+# web4 before the prompt: remove the dark overlay (measured against web3: obs = 0.55 * orig + 11.7),
+# blank the prompt, and put back the welcome text it covered (same text as img11, scaled 0.73).
+from PIL import Image
+u = np.clip((w4 - 11.7) / 0.55, 0, 255)
+clean = u.copy()
+u[205:331, 530:885] = 255                       # prompt and its shadow
+for y in range(318, 331):                       # chip top edges: mirror of their bottom edges (chips centred on 337.5)
+    u[y, 586:885] = clean[675 - y, 586:885]
+src = Image.fromarray(load('image11.png')[236:338, 620:880].astype(np.uint8))
+k, cx11, cy11, cx4, cy4 = 0.73, 748.25, 384, 783.75, 337.5
+dw, dh = round(260 * k), round(102 * k)
+dx, dy = round(cx4 + (620 - cx11) * k), round(cy4 + (236 - cy11) * k)
+u[dy:dy + dh, dx:dx + dw] = np.asarray(src.resize((dw, dh), Image.LANCZOS)).astype(np.float32)
+save(u, 'web4_before.png')
+# after 确认: the 联网检索 chip turns on (taken from web3, same layout)
+on = u.copy()
+on[548:579, 628:721] = w3[548:579, 628:721]
+save(on, 'web4_on.png')
+json.dump(boxes, open(os.path.join(OUT, 'boxes2.json'), 'w'), indent=1)
+print('web', boxes['web4'], boxes['web3'])

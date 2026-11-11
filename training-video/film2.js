@@ -4,15 +4,40 @@ import { makeFilm } from './client.js';
 const SIZES = {
   img8_closed: [1275, 814], img8: [1275, 814], img9: [1274, 813], img10: [1272, 815],
   img11_closed: [1273, 814], img11: [1273, 814], img12: [1269, 818], img13: [1270, 809],
-  img14: [1352, 708], img15: [1271, 814], img16: [1270, 817], img17: [1271, 814], img18: [1272, 818],
+  img14: [1352, 708], web4_before: [1404, 735], web4: [1404, 735], web4_on: [1404, 735], web3: [1404, 735],
+  web2: [1018, 594], img15: [1271, 814], img16: [1270, 817], img17: [1271, 814], img18: [1272, 818],
 };
+
+const GREEN = '#00897B';
+
+// selected checkbox: green box with a white tick
+function tick(g, u, x, y, size) {
+  g.fillStyle = GREEN;
+  u.rr(g, x, y, size, size, 3); g.fill();
+  g.strokeStyle = '#FFFFFF'; g.lineWidth = 2.2; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(x + size * 0.24, y + size * 0.52); g.lineTo(x + size * 0.43, y + size * 0.7);
+  g.lineTo(x + size * 0.77, y + size * 0.32); g.stroke();
+}
+
+// simulated typing into an input: blank the placeholder, type text with a caret
+function typing(a, img, text, tClick, tEnd, blank, x, y, px) {
+  const t0 = tClick + 0.3, dt = 0.18;
+  a.extra(tClick + 0.05, tEnd, img, (g, t, I, u) => {
+    g.fillStyle = '#FFFFFF'; g.fillRect(blank[0], blank[1], blank[2] - blank[0], blank[3] - blank[1]);
+    const n = t < t0 ? 0 : Math.min(text.length, Math.floor((t - t0) / dt) + 1);
+    const txt = text.slice(0, n);
+    g.font = u.font(px, 400); g.fillStyle = '#1E2933'; g.textBaseline = 'middle';
+    g.fillText(txt, x, y);
+    if (Math.floor(t * 2.2) % 2 === 0 || n < text.length) g.fillRect(x + 1 + g.measureText(txt).width, y - px * 0.6, 1.2, px * 1.2);
+  });
+}
 
 const film = makeFilm({
   chapter: 1,
   label: '2、会话区',
   steps: ['切换智能体', '智能体管理', '选择模型', '个人知识库', '联网检索', '密码箱', '附件'],
   sizes: SIZES,
-  glyphs: '查看今日未读邮件',
+  glyphs: '查看今日未读邮件今日金价明天天气',
   build(a) {
     let s, c;
     a.show(0, 'img8_closed', { fade: 0 });
@@ -97,31 +122,58 @@ const film = makeFilm({
     a.show(c + 0.12, 'img13', { fade: 0.28, pop: [392, 385, 642, 536] });
     s = a.say('可提问知识库相关问题，大模型优先回答知识库相关内容。', 7.0);
     a.focus(s + 0.3, a.T - 0.1, 'img13', [392, 385, 642, 536]);
-    a.cur(s + 0.8, 1.0, 'img13', 470, 485);
     a.hover(s + 1.6, a.T, 'img13', [404, 464, 626, 524]);
+    c = a.moveClick(s + 0.8, 'img13', 422, 483, 1.0);
+    a.extra(c, a.T + 2.0, 'img13', (g, t, I, u) => tick(g, u, 414, 475, 16));
     a.pause(1.0);
 
     // ---------------- 2.2.3 联网检索 ----------------
     c = a.card('2.2 聊天', '2.2.3 联网检索', 4);
-    a.show(c + 1.2, 'img14', { fade: 0.4 });
-    a.cam(c + 1.2, 0, 'img14', 676, 354, 1.0);
-    s = a.say('联网检索功能，系统依托内网服务通道实现外网网络访问，', 6.5);
-    a.cam(s + 0.2, 1.3, 'img14', 676, 400, 1.3);
-    a.focus(s + 0.5, a.T - 0.1, 'img14', [606, 527, 678, 554]);
-    a.cur(s + 0.8, 1.1, 'img14', 640, 541);
-    s = a.say('可对外开展公开信息检索、资料查询等网络操作。', 6.5);
-    a.focus(s + 0.3, a.T - 0.1, 'img14', [530, 212, 822, 309]);
-    a.cam(s + 0.3, 1.2, 'img14', 676, 280, 1.6);
-    a.moveClick(s + 1.6, 'img14', 785, 285, 1.2);
-    s = a.say('每天联网检索额度固定，如次数用完时，给出余额不足提示。', 9.0);
-    a.show(s + 0.1, 'img15', { fade: 0.45 });
-    a.cam(s + 0.1, 0, 'img15', 636, 407, 1.0);
-    a.cam(s + 0.6, 1.3, 'img15', 520, 500, 1.35);
-    a.focus(s + 1.0, s + 5.0, 'img15', [278, 584, 604, 648]);
-    a.tip(s + 1.4, a.T, '每天联网检索额度固定');
-    a.cur(s + 1.0, 1.2, 'img15', 552, 608);
-    a.focus(s + 5.3, a.T - 0.1, 'img15', [376, 140, 896, 388]);
-    a.cam(s + 5.2, 1.2, 'img15', 636, 330, 1.3);
+    a.show(c + 1.2, 'web4_before', { fade: 0.4 });
+    a.cam(c + 1.2, 0, 'web4_before', 702, 367, 1.0);
+    s = a.say('联网检索功能，系统依托内网服务通道实现外网网络访问，', 7.5);
+    a.cam(s + 0.2, 1.3, 'web4_before', 700, 470, 1.45);
+    a.focus(s + 0.4, s + 2.4, 'web4_before', [629, 547, 704, 575]);
+    a.badge(s + 0.4, s + 2.5, 1, 'web4_before', 629, 547);
+    c = a.moveClick(s + 0.8, 'web4_before', 666, 561, 1.1);
+    a.show(c + 0.12, 'web4', { fade: 0.3, pop: [540, 212, 866, 332] });
+    a.cam(c + 0.5, 1.2, 'web4', 702, 330, 1.45);
+    a.focus(c + 0.9, a.T - 0.1, 'web4', [550, 220, 854, 322]);
+
+    s = a.say('可对外开展公开信息检索、资料查询等网络操作。', 10.5);
+    a.focus(s + 0.2, s + 1.9, 'web4', [789, 277, 842, 311]);
+    a.badge(s + 0.2, s + 2.0, 2, 'web4', 789, 277);
+    c = a.moveClick(s + 0.4, 'web4', 815, 295, 1.0);
+    a.show(c + 0.12, 'web4_on', { fade: 0.3 });
+    a.cam(c + 0.3, 1.1, 'web4_on', 720, 560, 1.45);
+    let c2 = a.moveClick(c + 0.5, 'web4_on', 560, 591, 0.8);
+    let c3 = a.moveClick(c2 + 1.5, 'web4_on', 1070, 665, 0.9);
+    typing(a, 'web4_on', '今日金价', c2, c3 + 0.15, [480, 582, 760, 600], 486, 591, 11.5);
+    a.show(c3 + 0.15, 'web3', { fade: 0.35 });
+    a.cam(c3 + 0.4, 1.2, 'web3', 650, 300, 1.4);
+    a.focus(c3 + 0.9, a.T - 0.1, 'web3', [484, 255, 613, 283]);
+
+    s = a.say('每天联网检索额度固定，', 7.0);
+    a.tip(s + 0.4, a.T + 9.0, '每天联网检索额度固定');
+    a.cam(s + 0.2, 1.0, 'web3', 720, 560, 1.45);
+    c2 = a.moveClick(s + 0.5, 'web3', 560, 591, 0.9);
+    c3 = a.moveClick(c2 + 1.5, 'web3', 1070, 665, 0.9);
+    typing(a, 'web3', '明天天气', c2, c3 + 0.15, [480, 582, 760, 600], 486, 591, 11.5);
+    a.show(c3 + 0.15, 'web2', { fade: 0.4 });
+    a.cam(c3 + 0.15, 0.6, 'web2', 509, 300, 1.2);
+    a.cur(c3 + 0.3, 0.6, 'web2', 560, 420);
+
+    s = a.say('如次数用完时，给出余额不足提示。', 9.5);
+    a.focus(s + 0.2, s + 2.8, 'web2', [302, 219, 716, 356]);
+    a.focus(s + 3.0, s + 4.3, 'web2', [636, 305, 694, 337]);
+    a.badge(s + 3.0, s + 4.4, 3, 'web2', 636, 305);
+    c = a.moveClick(s + 3.1, 'web2', 665, 321, 0.9);
+    a.show(c + 0.15, 'img15', { fade: 0.45 });
+    a.cam(c + 0.15, 0.6, 'img15', 636, 330, 1.3);
+    a.cur(c + 0.4, 0.8, 'img15', 700, 300);
+    a.focus(c + 0.8, s + 6.6, 'img15', [376, 140, 896, 388]);
+    a.focus(s + 6.8, a.T - 0.1, 'img15', [792, 336, 872, 368]);
+    a.moveClick(s + 6.9, 'img15', 832, 352, 1.0);
     a.pause(1.0);
 
     // ---------------- 2.2.4 密码箱 ----------------
@@ -145,7 +197,7 @@ const film = makeFilm({
     a.focus(s + 0.3, s + 2.4, 'img16', [489, 411, 713, 470]);
     c = a.moveClick(s + 0.5, 'img16', 509, 441, 1.0);
     a.extra(c, s + 2.6, 'img16', (g) => {
-      g.fillStyle = '#2E7CF6';
+      g.fillStyle = GREEN;
       g.beginPath(); g.arc(508, 440, 8, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#FFFFFF';
       g.beginPath(); g.arc(508, 440, 3.2, 0, Math.PI * 2); g.fill();
@@ -185,9 +237,9 @@ const film = makeFilm({
     a.focus(s + 0.3, s + 3.2, 'img11', [333, 700, 362, 728]);
     a.badge(s + 0.3, s + 3.3, 1, 'img11', 333, 700);
     a.cur(s + 0.6, 1.1, 'img11', 348, 715);
-    a.extra(s + 1.9, s + 3.4, 'img11_closed', (g, t, I) => {
+    a.extra(s + 1.9, s + 3.4, 'img11_closed', (g, t, I, u) => {
       g.globalAlpha = Math.min(1, (t - (s + 1.9)) / 0.2);
-      g.drawImage(I.img18, 280, 658, 140, 28, 278, 654, 140, 28);
+      u.crop(I.img18, 280, 658, 140, 28, 278, 654);
     });
     c = s + 3.2;
     a.click(c, 'img11', 348, 715);
