@@ -557,12 +557,7 @@ function drawFocus(g, t, cam) {
     const [x1, y1, x2, y2] = rectToScreen(cam, f.space, f.rect);
     const pad = 10;
     g.save();
-    // dim everything else
-    g.beginPath();
-    g.rect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
-    rr(g, x1 - pad, y1 - pad, x2 - x1 + pad * 2, y2 - y1 + pad * 2, 12, false);
-    g.fillStyle = `rgba(14,26,38,${0.36 * a})`;
-    g.fill('evenodd');
+    // only the green frame: the rest of the picture is not dimmed
     // green ring
     g.lineWidth = 3; g.strokeStyle = `rgba(0,137,123,${a})`;
     g.shadowColor = 'rgba(0,160,140,0.6)'; g.shadowBlur = 12 * a;
