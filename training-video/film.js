@@ -122,7 +122,7 @@ STEP.push({ t: c0 + 0.3, i: 0 });
 T += CARD;
 
 // a new tab: type the portal address, the portal loads, scroll down to 常用工具
-s = say('登录内网门户，进入数字化门户首页，', 6.9);
+s = say('登录数字化门户，进入首页，', 6.9);
 {
   const tc = s + 0.6, t0 = tc + 0.2, tEnd = t0 + PORTAL.length * TYPE_DT + 0.25;
   cam(s, 0.8, ...sp(560, 66), 1.6);
@@ -156,22 +156,22 @@ FOCUS.push({ t0: s + 0.2, t1: T - 0.2, space: 'scr', rect: [195, 200, 1731, 997]
 cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while the pop-up rests
 
 {
-  // one continuous take, at recorded speed: hover 下载客户端 → menu → both sub-menus.
-  // The lines follow one another over it; what reading needs beyond the take is a rest on the open menus.
-  const t0 = T;
-  const te = play(t0 + 0.2, 'A', 178, 313, REAL);
-  click(t0 + 0.2 + 23 / FPS_REC / REAL, 'scr', 872, 578);
-  still(te, 'A/0313');
-  cam(t0, 1.0, ...sp(940, 720), 1.5);                         // one framing: button, menu and sub-menus
+  // Each line comes first; its part of the recording follows LEAD seconds later, at recorded speed.
+  // A: hover and click 下载客户端 (frames 178-205); B: browse both sub-menus (205-313).
+  const LEAD = 0.6;
   const b = [800, 557, 940, 603], m = [774, 618, 962, 740];
   s = say('点击【下载客户端】按钮。');
-  BADGES.push({ t0: s, t1: s + 1.6, n: 2, space: 'scr', x: b[0], y: b[1] });
-  FOCUS.push({ t0: s, t1: s + 1.4, space: 'scr', rect: b });
+  cam(s, 1.0, ...sp(940, 720), 1.5);                          // one framing: button, menu and sub-menus
+  FOCUS.push({ t0: s, t1: s + LEAD + 1.3, space: 'scr', rect: b });
+  const teA = play(s + LEAD, 'A', 178, 205, REAL);
+  click(s + LEAD + 23 / FPS_REC / REAL, 'scr', 872, 578);
+  still(teA, 'A/0205');                                       // the menu has just opened
   s = say('在弹出的选项中，根据电脑操作系统选择版本下载，');
-  BADGES.push({ t0: s, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
-  FOCUS.push({ t0: s - 1.6, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });   // menu + sub-menus
-  TIPS.push({ t0: s + 0.5, t1: T + 3.0, text: '根据电脑操作系统选择' });
-  cam(Math.max(te, t0 + 1.0), T - Math.max(te, t0 + 1.0), ...sp(940, 760), 1.62);   // slow push on the open menus
+  FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });   // menu + sub-menus
+  TIPS.push({ t0: s + 0.3, t1: T + 3.0, text: '根据电脑操作系统选择' });
+  const teB = play(s + LEAD, 'A', 205, 313, REAL);
+  still(teB, 'A/0313');
+  cam(s + 0.2, T - s - 0.2, ...sp(940, 760), 1.62);           // slow push while the menus open
 }
 s = say('下载成功后根据提示一步一步安装。');
 cam(s + 0.2, 1.2, WCX, WCY, 1);
