@@ -975,7 +975,7 @@ export function renderAt(tOut) {
     drawCards(g, t);
     g.restore();
     g.restore();
-    drawSubtitle(g, t);
+    // subtitles removed from video 1 at the client's request (the .srt is still exported)
   }
   drawTitle(g, t);
   drawRecap(g, t);
