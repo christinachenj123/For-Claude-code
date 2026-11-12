@@ -167,12 +167,10 @@ cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while t
   s = say('点击【下载客户端】按钮。');
   BADGES.push({ t0: s, t1: s + 1.6, n: 2, space: 'scr', x: b[0], y: b[1] });
   FOCUS.push({ t0: s, t1: s + 1.4, space: 'scr', rect: b });
-  s = say('在弹出的选项中，根据电脑操作系统');
+  s = say('在弹出的选项中，根据电脑操作系统选择版本下载，');
   BADGES.push({ t0: s, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
   FOCUS.push({ t0: s - 1.6, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });   // menu + sub-menus
-  TIPS.push({ t0: s + 0.5, t1: T + 5.0, text: '根据电脑操作系统选择' });
-  s = say('选择【Windows客户端】或【国产信创客户端】进行下载，');
-  FOCUS.push({ t0: s - 0.2, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });
+  TIPS.push({ t0: s + 0.5, t1: T + 3.0, text: '根据电脑操作系统选择' });
   cam(Math.max(te, t0 + 1.0), T - Math.max(te, t0 + 1.0), ...sp(940, 760), 1.62);   // slow push on the open menus
 }
 s = say('下载成功后根据提示一步一步安装。');
