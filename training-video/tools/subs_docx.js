@@ -37,7 +37,7 @@ const doc = new Document({
   sections: [{ children: [
     new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: '字幕时间表：1、下载、安装和登录', font: FONT })] }),
     p(`对应视频：${videoName}，总时长 ${fmt(+videoSec)}，共 ${cues.length} 条字幕。`),
-    p('时间格式为“分:秒”，精确到 0.1 秒，按视频实际播放时间计算。字幕内容取自《苏电智伴（IM）使用手册》第三部分原文；第 11 条（方式二）为确认后的合并简化版。'),
+    p('时间格式为“分:秒”，精确到 0.1 秒，按视频实际播放时间计算。字幕内容按《苏电智伴（IM）使用手册》第三部分原文整理：第 1 条为确认后的开场说明，第 10 条（方式二）为确认后的合并简化版，并去掉了原文的（1）（2）（3）编号。'),
     new Table({ width: { size: 9026, type: WidthType.DXA }, columnWidths: widths, rows: [header, ...rows] }),
   ] }],
 });
