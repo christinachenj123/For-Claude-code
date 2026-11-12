@@ -151,7 +151,7 @@ cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while t
 
 {
   s = say('（3）在弹出的选项中，根据电脑操作系统');
-  const m = [776, 640, 960, 715];
+  const m = [774, 618, 962, 740];               // the white menu (measured)
   BADGES.push({ t0: s, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
   FOCUS.push({ t0: s, t1: T, space: 'scr', rect: m });
   TIPS.push({ t0: s + 0.5, t1: T + 5.0, text: '根据电脑操作系统选择' });
@@ -159,7 +159,7 @@ cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while t
 }
 {
   s = say('选择【Windows客户端】或【国产信创客户端】进行下载，');
-  FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [776, 640, 1110, 905] });
+  FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });   // menu + sub-menus
   cam(s, 0.8, ...sp(945, 770), 1.6);
   const te = play(s + 0.1, 'A', 206, 313);
   still(te, 'A/0313');
@@ -197,7 +197,7 @@ T += CARD;
   cam(s, 0.9, ...sp(900, 520), 1.6);
   const te = play(s + 0.3, 'B', 199, 348);
   click(s + 0.3 + 2 / FPS_REC, 'scr', 869, 398);
-  FOCUS.push({ t0: s + 1.2, t1: te + 0.6, space: 'scr', rect: [776, 492, 1140, 735] });
+  FOCUS.push({ t0: s + 1.2, t1: te + 0.6, space: 'scr', rect: [774, 465, 1112, 741] });   // menu + sub-menus
   still(te, 'B/0348');
   cam(te + 0.3, 1.2, WCX, WCY, 1);
 }
@@ -214,7 +214,7 @@ T += CARD;
   s = say('安装成功后，双击【苏电IM】桌面图标，');
   const ic = [ICON.x + 8, ICON.y + 8, ICON.x + 118, ICON.y + 112];   // icon + label
   FOCUS.push({ t0: s, t1: s + 1.6, space: 'scr', rect: ic });
-  BADGES.push({ t0: s, t1: s + 1.7, n: 1, space: 'scr', x: ic[0], y: ic[1] });
+  BADGES.push({ t0: s, t1: s + 1.7, n: 1, space: 'scr', x: ic[2] + 20, y: ic[1] + 30 });   // right of the icon, clear of the top edge
   cam(s, 0.9, ...sp(260, 200), 1.9);
   cur(s + 0.1, 1.0, 'scr', ICON.x + 52, ICON.y + 48);
   click(s + 1.2, 'scr', ICON.x + 52, ICON.y + 48);
@@ -296,7 +296,7 @@ export async function setup() {
 const ALLTEXT = '苏电智伴（IM）使用手册第三部分常用功能1、下载、安装登录2、会话区3、工作区本节回顾下一节' +
   '提示方式一方式二数字化门户新标签页统一智能中枢微门户平台苏电IM造的一站式AI智能体研发与http://agent.js.sgcc.com.cn' +
   '从数字化门户登录进入下载通过统一智能中枢微门户平台下载安装成功后，双击【苏电IM】桌面图标，输入统一权限用户名、密码登录' +
-  '门户下载微门户下载回收站此电脑0123456789msa:/szhmh和';
+  '门户下载微门户下载回收站此电脑浏览器工作文档培训资料项目0123456789msa:/szhmh和';
 
 // =====================================================================
 // Camera, cursor and spaces
@@ -434,7 +434,54 @@ function drawDesktop(g, t) {
     g.strokeStyle = 'rgba(255,255,255,0.45)'; g.lineWidth = 1; g.strokeRect(ICON.x + 8.5, ICON.y + 8.5, 109, 103);
   }
   g.drawImage(deskIcon, ICON.x, ICON.y, ICON.size, ICON.size);
+  DESK_ITEMS.forEach(([label, kind], i) => {
+    const col = Math.floor((i + 1) / 7), row = (i + 1) % 7;   // 苏电IM is the first slot
+    deskItem(g, ICON.x + col * 120, ICON.y + row * 140, label, kind);
+  });
   g.drawImage(IMG.taskbar, 0, 1040, 1920, 40);
+  g.restore();
+}
+
+// generic desktop icons (drawn, no brand marks); slot = 128 px like the real 苏电IM icon
+const DESK_ITEMS = [['此电脑', 'pc'], ['回收站', 'bin'], ['浏览器', 'web'], ['工作文档', 'folder'],
+  ['培训资料', 'folder'], ['下载', 'folder'], ['项目资料', 'folder']];
+function deskItem(g, x, y, label, kind) {
+  const cx = x + 64, top = y + 22;
+  g.save();
+  g.shadowColor = 'rgba(0,0,0,0.25)'; g.shadowBlur = 4; g.shadowOffsetY = 2;
+  if (kind === 'folder') {
+    g.fillStyle = '#D9A21E'; rr(g, cx - 32, top + 6, 64, 46, 4); g.fill();
+    g.fillStyle = '#D9A21E'; rr(g, cx - 32, top + 1, 24, 12, 3); g.fill();
+    g.shadowColor = 'transparent';
+    g.fillStyle = '#F7C948'; rr(g, cx - 32, top + 14, 64, 40, 4); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(cx - 30, top + 16, 60, 6);
+  } else if (kind === 'pc') {
+    g.fillStyle = '#2B3A4A'; rr(g, cx - 30, top + 2, 60, 40, 4); g.fill();
+    g.shadowColor = 'transparent';
+    const gr = g.createLinearGradient(0, top + 6, 0, top + 38);
+    gr.addColorStop(0, '#5FC3F5'); gr.addColorStop(1, '#1E7FC8');
+    g.fillStyle = gr; g.fillRect(cx - 26, top + 6, 52, 32);
+    g.fillStyle = '#C9D2DA'; g.fillRect(cx - 5, top + 42, 10, 8); rr(g, cx - 18, top + 50, 36, 5, 2); g.fill();
+  } else if (kind === 'bin') {
+    g.fillStyle = 'rgba(235,242,248,0.92)';
+    g.beginPath(); g.moveTo(cx - 24, top + 8); g.lineTo(cx + 24, top + 8); g.lineTo(cx + 19, top + 56); g.lineTo(cx - 19, top + 56); g.closePath(); g.fill();
+    g.shadowColor = 'transparent';
+    g.strokeStyle = 'rgba(120,140,160,0.7)'; g.lineWidth = 2;
+    for (const dx of [-10, 0, 10]) { g.beginPath(); g.moveTo(cx + dx, top + 16); g.lineTo(cx + dx * 0.85, top + 50); g.stroke(); }
+    g.fillStyle = 'rgba(210,222,232,0.95)'; rr(g, cx - 27, top + 2, 54, 8, 3); g.fill();
+  } else {
+    g.fillStyle = '#2F86E0'; g.beginPath(); g.arc(cx, top + 28, 27, 0, Math.PI * 2); g.fill();
+    g.shadowColor = 'transparent';
+    g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 2;
+    g.beginPath(); g.ellipse(cx, top + 28, 11, 27, 0, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.moveTo(cx - 27, top + 28); g.lineTo(cx + 27, top + 28); g.stroke();
+    g.beginPath(); g.moveTo(cx - 23, top + 15); g.lineTo(cx + 23, top + 15); g.moveTo(cx - 23, top + 41); g.lineTo(cx + 23, top + 41); g.stroke();
+  }
+  g.restore();
+  g.save();
+  g.fillStyle = '#FFFFFF'; g.font = font(19, 400); g.textAlign = 'center'; g.textBaseline = 'top';
+  g.shadowColor = 'rgba(0,0,0,0.75)'; g.shadowBlur = 3; g.shadowOffsetY = 1;
+  g.fillText(label, cx, y + 86);
   g.restore();
 }
 
