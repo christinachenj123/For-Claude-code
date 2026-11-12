@@ -73,6 +73,27 @@ def fill(a, mask):
     return a
 
 
+def fill_from(a, target, source):
+    """Onion-peel fill of `target` pixels using only `source` pixels (and target pixels already filled)."""
+    a = a.copy()
+    known = source.copy()
+    todo = target & ~known
+    while todo.any():
+        acc = np.zeros_like(a)
+        cnt = np.zeros(todo.shape, np.float32)
+        for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)):
+            k = np.roll(np.roll(known, dy, 0), dx, 1)
+            acc += np.roll(np.roll(a, dy, 0), dx, 1) * k[..., None]
+            cnt += k
+        new = todo & (cnt > 0)
+        if not new.any():
+            break
+        a[new] = acc[new] / cnt[new][:, None]
+        known |= new
+        todo &= ~new
+    return a
+
+
 def remove_boxes(a, grow=2):
     """Remove hollow red rectangles; keep filled red things (icons, badges).
 
@@ -113,6 +134,49 @@ def remove_boxes(a, grow=2):
                     k = inner + 1
                     src = {'t': (cy(y1 + k), x), 'b': (cy(y2 - k), x), 'l': (y, cx(x1 + k)), 'r': (y, cx(x2 - k))}[side]
                 out[y, x] = a[src]
+    return out, boxes
+
+
+def remove_boxes_jpeg(a, grow=2):
+    """remove_boxes for JPEG screenshots (video 1): also clears the wider, noisy red fringe JPEG leaves.
+
+    Only reddish pixels (the line and its anti-aliased / JPEG fringe) change. The line and everything
+    outside it are rebuilt from clean pixels outside the box; the fringe inside the line from clean
+    pixels inside. Nothing is averaged across the line, so a button the box hugs keeps its edge and
+    colour, and nothing is copied from far away (no streaks through nearby text).
+    """
+    m = red_mask(a)
+    H, W = m.shape
+    out = a.copy()
+    boxes = []
+    r_, g_, b_ = a[..., 0], a[..., 1], a[..., 2]
+    redness = r_ - np.maximum(g_, b_)
+    yy, xx = np.mgrid[0:H, 0:W]
+    for p in components(m):
+        y1, x1 = p.min(0)
+        y2, x2 = p.max(0)
+        area = (x2 - x1 + 1) * (y2 - y1 + 1)
+        ys, xs = p[:, 0], p[:, 1]
+        edge = (np.minimum.reduce([ys - y1, y2 - ys, xs - x1, x2 - xs]) <= 4).mean()
+        if not ((x2 - x1) > 14 and (y2 - y1) > 10 and len(p) < 0.45 * area and edge > 0.9):
+            continue
+        boxes.append([int(x1), int(y1), int(x2), int(y2)])
+        lw = max(1, int(m[y1:y1 + 8, (x1 + x2) // 2].sum()))      # line width
+        dist = np.minimum.reduce([yy - y1, y2 - yy, xx - x1, x2 - xx])  # >0 inside the box, <0 outside
+        band = (dist >= -6) & (dist < lw + 3)
+        mm = np.zeros((H, W), bool); mm[ys, xs] = True
+        # "reddish" relative to the local background: blue-ish pages make a faint red tint hard to see
+        # in absolute terms, so compare with the median tint just outside the band
+        ring_out = (dist < -6) & (dist >= -14)
+        base = np.median(redness[ring_out]) if ring_out.any() else 0
+        reddish = band & (mm | (dilate(m, 4) & (redness > max(1, base + 4)) if base > -2 else
+                               dilate(m, 4) & (redness > base + 4)))
+        outer_t = reddish & (dist < lw)                            # the line and the fringe outside it
+        inner_t = reddish & (dist >= lw)                           # the fringe inside the line
+        outer_s = (dist < 0) & (dist >= -12) & ~reddish
+        inner_s = (dist >= lw) & (dist < lw + 10) & ~reddish
+        out = fill_from(out, outer_t, outer_s)
+        out = fill_from(out, inner_t, inner_s)
     return out, boxes
 
 
