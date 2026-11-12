@@ -16,6 +16,7 @@ from imgtools import fill
 OUT = 'assets/rec1'
 A_RANGE, B_RANGE = (29, 313), (199, 348)          # frames used (25 fps); the rest is the recorder window
 A_MODAL = 178                                     # first frame with the platform pop-up
+SWITCHES = {'A': [(256, 259)], 'B': [(279, 282)]}   # sub-menu switches (last old frame, first full new frame)
 
 
 def frames(mkv):
@@ -101,5 +102,13 @@ for src, mkv, (f0, f1) in (('A', 'src/rec_a.mkv', A_RANGE), ('B', 'src/rec_b.mkv
         vals, counts = np.unique(blank[8:38, 44:252].reshape(-1, 3), axis=0, return_counts=True)
         blank[8:38, 44:252] = vals[counts.argmax()]                     # tab without title or icon
         save(blank, 'B_blank.jpg')
+    # The page's own sub-menu switch shows ~2 frames with no menu (the dark-blue banner behind it shows
+    # through) and a half-transparent new menu. Replace them with a crossfade between the frames around them.
+    for old, new in SWITCHES[src]:
+        a0 = np.asarray(Image.open(os.path.join(OUT, f'{src}/{old:04d}.jpg'))).astype(np.float32)
+        a1 = np.asarray(Image.open(os.path.join(OUT, f'{src}/{new:04d}.jpg'))).astype(np.float32)
+        for i in range(old + 1, new):
+            k = (i - old) / (new - old)
+            save((a0 * (1 - k) + a1 * k).astype(np.uint8), f'{src}/{i:04d}.jpg')
     shutil.rmtree(d)
 print('frames:', len(os.listdir(OUT + '/A')), len(os.listdir(OUT + '/B')))
