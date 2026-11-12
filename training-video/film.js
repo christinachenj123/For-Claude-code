@@ -82,7 +82,10 @@ function say(text, minDur = 0) {
   return s;
 }
 const pause = (d) => { T += d; };
-const cam = (t, d, cx, cy, z) => CAM.push({ t, d, cx, cy, z });
+// camera keys are clamped when added, so the view never leaves the screen and never needs correcting later
+const camFit = (c, z, lo, size, half) => (2 * half / z >= size ? lo + size / 2 : clamp(c, lo + half / z, lo + size - half / z));
+const cam = (t, d, cx, cy, z) => CAM.push({ t, d, z,
+  cx: camFit(cx, z, SCR.x, 1920 * SCR.s, STAGE.w / 2), cy: camFit(cy, z, SCR.y, 1080 * SCR.s, STAGE.h / 2) });
 const cur = (t, d, space, x, y) => CUR.push({ t, d, space, x, y });
 const click = (t, space, x, y) => CLICKS.push({ t, space, x, y });
 
@@ -101,15 +104,29 @@ T = 3.0;                              // the opening lines start while the title
 const tStageIn = 6.6;
 const CARD = 1.8;                     // section card on screen (film seconds)
 const TYPE_DT = 0.06;                 // typing speed (film seconds per character)
+const TYPING = [];                    // {imgs, text, tClick, t0, tEnd, select}: typing into Chrome's address bar
+const PORTAL = 'http://msa.js.sgcc.com.cn:6001/szhmh';   // 数字化门户地址
 cam(0, 0, WCX, WCY, 1);
-cur(0, 0, 'scr', 1731, 622);          // the real pointer's position in A's portal frames
-still(0, 'A/0030');
+cur(0, 0, 'scr', 960, 640);
+still(0, 'A_blank', { synth: true });
 
-// Intro paragraph
+// Intro paragraph, over opening the portal: a new tab, type the address, the portal loads
 let s = say('苏电智伴IM客户端可从数字化门户登录进入后下载，');
-cam(s + 0.3, 13, WCX, WCY - 10, 1.05);
+{
+  const tc = tStageIn + 1.0, t0 = tc + 0.2, tEnd = t0 + PORTAL.length * TYPE_DT + 0.25;
+  cam(tStageIn + 0.2, 0.9, ...sp(560, 66), 1.6);
+  cur(tStageIn + 0.3, 0.7, 'scr', 520, 66);
+  click(tc, 'scr', 520, 66);
+  TYPING.push({ imgs: ['A_blank'], text: PORTAL, tClick: tc, t0, tEnd });
+  FOCUS.push({ t0: tStageIn + 0.4, t1: tEnd + 0.1, space: 'scr', rect: [118, 50, 1660, 81] });
+  still(tEnd, 'A_top', { synth: true, fade: 0.35 });
+  cam(tEnd + 0.15, 1.0, WCX, WCY, 1.0);
+  cur(tEnd + 0.3, 0.9, 'scr', 1731, 622);                    // to the real pointer in frame 30
+  still(tEnd + 1.25, 'A/0030');
+}
 s = say('也可通过统一智能中枢微门户平台直接下载，两种方式任选其一。');
 TIPS.push({ t0: s + 1.0, t1: T + 0.2, text: '两种方式任选其一' });
+cam(s + 1.6, T - s - 1.6, WCX, WCY - 10, 1.05);              // slow push while the portal rests
 
 // ---- 方式一 ----
 let c0 = T;
@@ -126,14 +143,12 @@ still(tScrollEnd, 'A_hold', { synth: true });
   const card = [956, 387, 1244, 744];
   BADGES.push({ t0: s, t1: s + 1.3, n: 1, space: 'scr', x: card[0], y: card[1] });
   FOCUS.push({ t0: s, t1: s + 1.3, space: 'scr', rect: card });
-  cam(s, 0.9, ...sp(1100, 560), 1.4);
   cur(s + 0.1, 1.0, 'scr', 1100, 560);
   click(s + 1.15, 'scr', 1100, 560);
   const tPop = s + 1.3;
   still(tPop, 'A_modal', { synth: true, fade: 0.35, pop: [195, 200, 1731, 997] });
   cur(tPop + 0.2, 0.6, 'scr', 861, 598);                    // to the real pointer in frame 178
   still(tPop + 0.85, 'A/0178');
-  cam(tPop, 1.0, WCX, WCY, 1.0);
 }
 
 s = say('（2）门户内弹出苏电智伴·通用智能体平台页面，');
@@ -167,15 +182,17 @@ cam(s + 0.2, 1.2, WCX, WCY, 1);
 c0 = T;
 CARDS.push({ t0: c0, t1: c0 + CARD - 0.2, tag: '方式二', title: '通过统一智能中枢微门户平台下载' });
 STEP.push({ t: c0 + 0.3, i: 1 });
-still(c0 + 0.45, 'B_blank', { synth: true });
+still(c0 + 0.45, 'A_top', { synth: true });               // back on the portal home
 cur(c0 + 0.45, 0, 'scr', 1000, 880);
 T += CARD;
 
 {
   s = say('地址：http://agent.js.sgcc.com.cn');
-  var URL = 'http://agent.js.sgcc.com.cn';
-  var tAddrClick = s + 0.75, tType0 = s + 0.95;
-  var tType1 = tType0 + URL.length * TYPE_DT, tEnter = tType1 + 0.25;
+  const URL = 'http://agent.js.sgcc.com.cn';
+  const tAddrClick = s + 0.75, tType0 = s + 1.15;             // click selects the old address, typing replaces it
+  const tEnter = tType0 + URL.length * TYPE_DT + 0.25;
+  still(tType0, 'A_field', { synth: true });
+  TYPING.push({ imgs: ['A_top', 'A_field'], text: URL, tClick: tAddrClick, t0: tType0, tEnd: tEnter, select: [200, 56, 458, 77] });
   cam(s, 0.8, ...sp(560, 66), 1.8);
   cur(s, 0.7, 'scr', 520, 66);
   click(tAddrClick, 'scr', 520, 66);
@@ -282,7 +299,7 @@ export async function setup() {
   gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(f / h, '#000'); gy.addColorStop(1 - f / h, '#000'); gy.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = gy; g.fillRect(0, 0, w, h);
   deskIcon = c;
-  await Promise.all(['A/0030', 'A_hold', 'A_modal', 'B_blank', 'B_page'].map(frameImg));
+  await Promise.all(['A/0030', 'A_hold', 'A_modal', 'A_blank', 'A_top', 'A_field', 'B_page'].map(frameImg));
 
   // fonts: load every glyph the film uses
   const all = SUBS.map((s) => s.text).join('') + CARDS.map((c) => c.tag + c.title).join('') +
@@ -299,14 +316,17 @@ const ALLTEXT = '苏电智伴（IM）使用手册第三部分常用功能1、下
 // =====================================================================
 function camAt(t) {
   let cx = CAM[0].cx, cy = CAM[0].cy, z = CAM[0].z;
+  const HW = STAGE.w / 2, HH = STAGE.h / 2;
   for (const k of CAM) {
     if (t < k.t) break;
     const p = k.d ? ease(prog(t, k.t, k.d)) : 1;
-    cx = lerp(cx, k.cx, p); cy = lerp(cy, k.cy, p); z = Math.exp(lerp(Math.log(z), Math.log(k.z), p));
+    // Interpolate the view's edges, with the zoom geometric: a push or pull moves in a straight line
+    // toward its target and both edges stay inside the screen (no sideways swing).
+    const z1 = Math.exp(lerp(Math.log(z), Math.log(k.z), p));
+    const q = Math.abs(k.z - z) > 1e-4 ? (1 / z - 1 / z1) / (1 / z - 1 / k.z) : p;
+    const L = lerp(cx - HW / z, k.cx - HW / k.z, q), Tp = lerp(cy - HH / z, k.cy - HH / k.z, q);
+    z = z1; cx = L + HW / z; cy = Tp + HH / z;
   }
-  const fit = (c, half, lo, size) => (2 * half >= size ? lo + size / 2 : clamp(c, lo + half, lo + size - half));
-  cx = fit(cx, STAGE.w / 2 / z, SCR.x, 1920 * SCR.s);
-  cy = fit(cy, STAGE.h / 2 / z, SCR.y, 1080 * SCR.s);
   return { cx, cy, z };
 }
 // world → screen
@@ -400,17 +420,23 @@ function drawScreenFrame(g, t, R, F) {
     g.drawImage(im, 0, 0, 1920, 1080);
   }
   g.globalAlpha = 1;
-  // 方式二 before the page loads: a new tab, typing the address
-  if (R.name === 'B_blank') {
+  // typing into the address bar
+  if (R.name === 'A_blank') {
     g.fillStyle = '#1F1F1F'; g.font = '400 14px "Noto Sans SC"'; g.textBaseline = 'middle';
     g.fillText('新标签页', 56, 23);
-    if (t >= tAddrClick) {
-      g.strokeStyle = '#0B57D0'; g.lineWidth = 2; rr(g, 119, 51, 1540, 29, 14); g.stroke();
-      const n = t < tType0 ? 0 : Math.min(URL.length, Math.floor((t - tType0) / TYPE_DT) + 1);
-      const txt = URL.slice(0, n);
-      g.font = '400 17px "Noto Sans SC"'; g.fillText(txt, 150, 66);
-      if (Math.floor(t * 2.2) % 2 === 0 || n < URL.length) g.fillRect(151 + g.measureText(txt).width, 57, 1.3, 18);
+  }
+  for (const ty of TYPING) {
+    if (t < ty.tClick || t >= ty.tEnd || !ty.imgs.includes(R.name)) continue;
+    g.strokeStyle = '#0B57D0'; g.lineWidth = 2; rr(g, 119, 51, 1540, 29, 14); g.stroke();
+    g.fillStyle = '#1F1F1F'; g.textBaseline = 'middle';
+    if (t < ty.t0) {
+      if (ty.select) { g.fillStyle = 'rgba(11,87,208,0.22)'; g.fillRect(...ty.select.slice(0, 2), ty.select[2] - ty.select[0], ty.select[3] - ty.select[1]); }
+      continue;
     }
+    const n = Math.min(ty.text.length, Math.floor((t - ty.t0) / TYPE_DT) + 1);
+    const txt = ty.text.slice(0, n);
+    g.font = '400 17px "Noto Sans SC"'; g.fillText(txt, 150, 66);
+    if (Math.floor(t * 2.2) % 2 === 0 || n < ty.text.length) g.fillRect(151 + g.measureText(txt).width, 57, 1.3, 18);
   }
   g.restore();
 }
@@ -867,7 +893,7 @@ export async function renderAt(tOut) {
     g.restore();
     drawFocus(g, t, cam);
     drawClicks(g, t, cam);
-    drawBadges(g, t, cam);
+    // step numbers removed from video 1 at the client's request
     drawCursor(g, t, cam, R);
     drawTips(g, t);
     drawCards(g, t);

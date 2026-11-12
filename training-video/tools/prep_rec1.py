@@ -82,6 +82,16 @@ for src, mkv, (f0, f1) in (('A', 'src/rec_a.mkv', A_RANGE), ('B', 'src/rec_b.mkv
         save(erase_cursor(clean(load(d, 120), 'A', 120), (1731, 622)), 'A_hold.jpg')
         save(erase_cursor(clean(load(d, A_MODAL), 'A', A_MODAL), (861, 598)), 'A_modal.jpg')
         save(load(d, 100)[1040:1080], 'taskbar.jpg')
+        top = erase_cursor(clean(load(d, 30), 'A', 30), (1731, 622))
+        save(top, 'A_top.jpg')                                         # portal home, pointer erased
+        field = top.copy()
+        field[50:81, 118:1660] = field[52, 1500]                       # address field emptied (typing)
+        save(field, 'A_field.jpg')
+        blank = field.copy()
+        blank[88:1040] = 255                                           # a new tab: nothing loaded
+        vals, counts = np.unique(blank[8:38, 44:252].reshape(-1, 3), axis=0, return_counts=True)
+        blank[8:38, 44:252] = vals[counts.argmax()]                     # tab without title or icon
+        save(blank, 'A_blank.jpg')
     else:
         page = erase_cursor(clean(load(d, 199), 'B', 199), (867, 395), patch=clean(load(d, 125), 'B', 125))
         save(page, 'B_page.jpg')
