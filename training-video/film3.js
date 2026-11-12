@@ -142,7 +142,6 @@ still(te, fr('b', 182)); after(te);
 
 s = say('输入技能名称和技能内容（Markdown格式，需包含name和description），');
 t1 = play(s + 0.2, 'b', 182, 460, { speed: 3 });                                // name (typed with an IME)
-focus(s + 0.2, t1, 'scr', [1430, 140, 1912, 205]);
 t2 = play(t1, 'b', 460, 545);                                                   // content pasted
 focus(t1 + 0.2, t2 + 0.4, 'scr', [1430, 262, 1912, 535]);
 still(t2, fr('b', 545)); after(t2);
@@ -151,7 +150,7 @@ s = say('点击【创建】按钮，成功后可在技能列表中看到新创�
 t1 = play(s + 0.2, 'b', 545, 578);
 focus(s, ft('b', 545, 575, s + 0.2), 'scr', [1840, 996, 1912, 1030]);
 te = play(t1, 'b', 746, 820, { fade: 0.35 });                                   // (security warning cut)
-focus(ft('b', 746, 790, t1), te + 1.2, 'scr', [665, 440, 1062, 760]);           // the new skill
+focus(ft('b', 746, 790, t1), te + 1.2, 'scr', [660, 328, 1060, 664]);           // the new skill
 still(te, fr('b', 820)); after(te + 0.6);
 
 // ================= 3.1.2 从技能池载入 =================
@@ -202,15 +201,15 @@ t1 = play(s + 0.2, 'a', 1500, 1525);
 focus(s, ft('a', 1500, 1510, s + 0.2), 'scr', [744, 498, 846, 524]);
 te = play(t1, 'a', 1582, 1690, { fade: 0.2 });                                 // (security warning cut)
 focus(t1, ft('a', 1582, 1600, t1), 'scr', [830, 44, 1100, 96]);                // 技能上传成功
-focus(ft('a', 1582, 1625, t1), te + 0.6, 'scr', [665, 425, 1062, 748]);         // the uploaded skill
+focus(ft('a', 1582, 1625, t1), te + 0.6, 'scr', [660, 444, 1060, 756]);         // the uploaded skill
 still(te, fr('a', 1690)); after(te + 0.4);
 
 // ================= 3.1.5 保存本地 =================
 section('3.1 技能', '3.1.5 保存本地', 4);
 still(T - CARD + 0.45, fr('b', 806));
 s = say('自定义类型的技能新增【保存本地】功能，支持技能导出：');
-focus(s + 0.2, T - 0.1, 'scr', [665, 440, 1062, 760]);
-focus(s + 1.8, T - 0.1, 'scr', [772, 716, 862, 748]);
+focus(s + 0.2, s + 1.7, 'scr', [660, 328, 1060, 664]);                          // the custom skill card
+focus(s + 1.8, T - 0.1, 'scr', [772, 616, 876, 650]);                           // 保存至本地
 
 s = say('点击【保存本地】，选择保存位置，即可导出到本地。');
 te = play(s + 0.2, 'b', 1160, 1420, { speed: 1.4 });
@@ -220,7 +219,7 @@ still(te, fr('b', 1420)); after(te);
 
 s = say('不需要的自定义技能，可点击【删除】移除。');
 te = play(s + 0.2, 'b', 1550, 1625);
-focus(s, ft('b', 1550, 1566, s + 0.2), 'scr', [958, 716, 1024, 748]);
+focus(s, ft('b', 1550, 1566, s + 0.2), 'scr', [966, 616, 1032, 650]);           // 删除
 focus(ft('b', 1550, 1568, s + 0.2), ft('b', 1550, 1604, s + 0.2), 'scr', [748, 136, 1168, 290]);
 focus(ft('b', 1550, 1608, s + 0.2), te + 0.6, 'scr', [890, 44, 1120, 98]);       // 技能删除成功
 still(te, fr('b', 1625)); after(te);
@@ -237,22 +236,20 @@ still(t2, fr('c', 500)); after(t2);
 
 s = say('填写知识库名称，选择保存位置，');
 t1 = play(s + 0.1, 'c', 500, 640, { speed: 2 });                                // name (typed with an IME)
-focus(s, t1, 'scr', [790, 352, 1272, 424]);                                     // name
 te = play(t1, 'c', 640, 790, { speed: 1.5 });                                   // folder picker
-focus(t1 + 0.4, te + 0.3, 'scr', [790, 436, 1300, 492]);                        // save location
 still(te, fr('c', 790)); after(te);
 
 s = say('勾选知识库类型，设置LLM模型，最后点击【创建知识库】。');
 te = play(s + 0.2, 'c', 790, 905);
-focus(s, ft('c', 790, 838, s + 0.2), 'scr', [604, 652, 1312, 756]);            // types
-focus(ft('c', 790, 840, s + 0.2), ft('c', 790, 868, s + 0.2), 'scr', [604, 556, 1312, 866]);   // types + LLM model
-focus(ft('c', 790, 868, s + 0.2), te + 0.3, 'scr', [1186, 926, 1316, 972]);     // 创建知识库
+focus(s, ft('c', 790, 744, s + 0.2), 'scr', [604, 652, 1312, 756]);            // types
+focus(ft('c', 790, 746, s + 0.2), ft('c', 790, 868, s + 0.2), 'scr', [604, 556, 1312, 866]);   // types + LLM model
+focus(ft('c', 790, 868, s + 0.2), ft('c', 790, 882, s + 0.2), 'scr', [1186, 926, 1316, 972]);   // 创建知识库
 still(te, fr('c', 905)); after(te + 0.4);
 
 s = say('若本地已存在个人知识库文件夹，点击【打开知识库】，选择该文件夹导入即可。');
 still(s, 'shot:img26', { synth: true, fade: 0.35 });
 cur(s, 0, 'shot:img26', 900, 420);
-focus(s + 0.3, s + 2.4, 'shot:img26', [1012, 197, 1118, 229]);
+focus(s + 0.3, s + 1.7, 'shot:img26', [1012, 197, 1118, 229]);
 cur(s + 0.4, 1.0, 'shot:img26', 1065, 213);
 click(s + 1.6, 'shot:img26', 1065, 213);
 still(s + 1.75, 'shot:img25', { synth: true, fade: 0.3, pop: pr('img25', [449, 183, 1235, 823]) });
@@ -333,7 +330,7 @@ section('3.2 个人知识库', '3.2.3 会话问答', 7);
 still(T - CARD + 0.45, 'shot:img26', { synth: true });
 cur(T - CARD + 0.45, 0, 'shot:img26', 900, 600);
 s = say('点击【会话问答】或【对话】，输入问题后点击【发送】，');
-focus(s, s + 2.0, 'shot:img26', [579, 390, 616, 420]);
+focus(s, s + 1.6, 'shot:img26', [579, 390, 616, 420]);
 cur(s + 0.2, 1.0, 'shot:img26', 598, 406);
 click(s + 1.5, 'shot:img26', 598, 406);
 still(s + 1.7, 'shot:img37_empty', { synth: true, fade: 0.35 });
@@ -349,7 +346,7 @@ click(s + 2.9, 'shot:img37_empty', 700, 706);
   after(tq + 1.7);
 }
 s = say('模型会基于该知识库给出相关回答。');
-focus(s + 0.2, T + 0.4, 'shot:img37', [452, 252, 1232, 662]);
+focus(s + 0.2, T - 0.2, 'shot:img37', [452, 252, 1232, 662]);
 cur(s + 0.3, 1.0, 'shot:img37', 900, 520);
 pause(1.0);
 
@@ -363,6 +360,7 @@ const DUR = DUR_FILM;       // used by the drawing code (film time)
 // Whole-film speed: output time = film time / SPEED.
 const SPEED = 1.2;
 export const OUT_DUR = DUR_FILM / SPEED;
+export const OUT_FOCUS = FOCUS.map((f) => ({ t0: f.t0 / SPEED, t1: f.t1 / SPEED, rect: f.rect, space: f.space }));
 export const OUT_SUBS = SUBS.map((x) => ({ t0: x.t0 / SPEED, t1: x.t1 / SPEED, text: x.text }));
 
 // =====================================================================
