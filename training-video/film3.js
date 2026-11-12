@@ -169,7 +169,6 @@ still(te, fr('a', 186)); after(te);
 s = say('点击【确认】，技能池技能即下载到当前工作区。');
 te = play(s + 0.2, 'a', 186, 250);
 focus(s, ft('a', 186, 193, s + 0.2), 'scr', [1172, 482, 1240, 516]);
-focus(ft('a', 186, 197, s + 0.2), te + 0.3, 'scr', [860, 44, 1062, 96]);         // 已下载至当前工作区
 still(te, fr('a', 250)); after(te);
 
 // ================= 3.1.3 同步到技能池 =================
@@ -184,7 +183,6 @@ still(te, fr('a', 515)); after(te);
 s = say('点击【确认】，技能即同步到技能池。');
 te = play(s + 0.2, 'a', 515, 630, { speed: 1.5 });
 focus(s, ft('a', 515, 522, s + 0.2, 1.5), 'scr', [1172, 482, 1240, 516]);
-focus(ft('a', 515, 587, s + 0.2, 1.5), te + 0.3, 'scr', [860, 44, 1062, 96]);    // 已上传至技能池
 still(te, fr('a', 630)); after(te);
 
 // ================= 3.1.4 上传技能 =================
@@ -241,8 +239,6 @@ still(te, fr('c', 790)); after(te);
 
 s = say('勾选知识库类型，设置LLM模型，最后点击【创建知识库】。');
 te = play(s + 0.2, 'c', 790, 905);
-focus(s, ft('c', 790, 744, s + 0.2), 'scr', [604, 652, 1312, 756]);            // types
-focus(ft('c', 790, 746, s + 0.2), ft('c', 790, 868, s + 0.2), 'scr', [604, 556, 1312, 866]);   // types + LLM model
 focus(ft('c', 790, 868, s + 0.2), ft('c', 790, 882, s + 0.2), 'scr', [1186, 926, 1316, 972]);   // 创建知识库
 still(te, fr('c', 905)); after(te + 0.4);
 
@@ -564,12 +560,7 @@ function drawFocus(g, t, cam) {
     const [x1, y1, x2, y2] = rectToScreen(cam, f.space, f.rect);
     const pad = 10;
     g.save();
-    // dim everything else
-    g.beginPath();
-    g.rect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
-    rr(g, x1 - pad, y1 - pad, x2 - x1 + pad * 2, y2 - y1 + pad * 2, 12, false);
-    g.fillStyle = `rgba(14,26,38,${0.36 * a})`;
-    g.fill('evenodd');
+    // only the green frame: the rest of the picture is not dimmed
     // green ring
     g.lineWidth = 3; g.strokeStyle = `rgba(0,137,123,${a})`;
     g.shadowColor = 'rgba(0,160,140,0.6)'; g.shadowBlur = 12 * a;
