@@ -110,23 +110,10 @@ cam(0, 0, WCX, WCY, 1);
 cur(0, 0, 'scr', 960, 640);
 still(0, 'A_blank', { synth: true });
 
-// Intro paragraph, over opening the portal: a new tab, type the address, the portal loads
-let s = say('苏电智伴IM客户端可从数字化门户登录进入后下载，');
-{
-  const tc = tStageIn + 1.0, t0 = tc + 0.2, tEnd = t0 + PORTAL.length * TYPE_DT + 0.25;
-  cam(tStageIn + 0.2, 0.9, ...sp(560, 66), 1.6);
-  cur(tStageIn + 0.3, 0.7, 'scr', 520, 66);
-  click(tc, 'scr', 520, 66);
-  TYPING.push({ imgs: ['A_blank'], text: PORTAL, tClick: tc, t0, tEnd });
-  FOCUS.push({ t0: tStageIn + 0.4, t1: tEnd + 0.1, space: 'scr', rect: [118, 50, 1660, 81] });
-  still(tEnd, 'A_top', { synth: true, fade: 0.35 });
-  cam(tEnd + 0.15, 1.0, WCX, WCY, 1.0);
-  cur(tEnd + 0.3, 0.9, 'scr', 1731, 622);                    // to the real pointer in frame 30
-  still(tEnd + 1.25, 'A/0030');
-}
-s = say('也可通过统一智能中枢微门户平台直接下载，两种方式任选其一。');
-TIPS.push({ t0: s + 1.0, t1: T + 0.2, text: '两种方式任选其一' });
-cam(s + 1.6, T - s - 1.6, WCX, WCY - 10, 1.05);              // slow push while the portal rests
+// The opening line, over the title
+T = 0.4;
+let s = say('苏电智伴有两种下载方式，二者任意选择其一即可。');
+T = Math.max(T, tStageIn + 0.3);
 
 // ---- 方式一 ----
 let c0 = T;
@@ -134,9 +121,22 @@ CARDS.push({ t0: c0, t1: c0 + CARD - 0.2, tag: '方式一', title: '从数字化
 STEP.push({ t: c0 + 0.3, i: 0 });
 T += CARD;
 
-s = say('（1）登录内网门户，进入数字化门户首页，');
-const tScrollEnd = play(s + 0.2, 'A', 30, 89);              // scroll down to 常用工具
-still(tScrollEnd, 'A_hold', { synth: true });
+// a new tab: type the portal address, the portal loads, scroll down to 常用工具
+s = say('登录内网门户，进入数字化门户首页，', 6.9);
+{
+  const tc = s + 0.6, t0 = tc + 0.2, tEnd = t0 + PORTAL.length * TYPE_DT + 0.25;
+  cam(s, 0.8, ...sp(560, 66), 1.6);
+  cur(s, 0.6, 'scr', 520, 66);
+  click(tc, 'scr', 520, 66);
+  TYPING.push({ imgs: ['A_blank'], text: PORTAL, tClick: tc, t0, tEnd });
+  FOCUS.push({ t0: s + 0.1, t1: tEnd + 0.1, space: 'scr', rect: [118, 50, 1660, 81] });
+  still(tEnd, 'A_top', { synth: true, fade: 0.3 });
+  cam(tEnd + 0.1, 0.9, WCX, WCY, 1.0);
+  cur(tEnd + 0.2, 0.8, 'scr', 1731, 622);                    // to the real pointer in frame 30
+  still(tEnd + 1.05, 'A/0030');
+  const tScrollEnd = play(tEnd + 1.1, 'A', 30, 89);           // scroll down to 常用工具
+  still(tScrollEnd, 'A_hold', { synth: true });
+}
 
 {
   s = say('点击【苏电智伴】卡片。');
@@ -151,7 +151,7 @@ still(tScrollEnd, 'A_hold', { synth: true });
   still(tPop + 0.85, 'A/0178');
 }
 
-s = say('（2）门户内弹出苏电智伴·通用智能体平台页面，');
+s = say('门户内弹出苏电智伴·通用智能体平台页面，');
 FOCUS.push({ t0: s + 0.2, t1: T - 0.2, space: 'scr', rect: [195, 200, 1731, 997] });
 cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while the pop-up rests
 
@@ -167,7 +167,7 @@ cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while t
   s = say('点击【下载客户端】按钮。');
   BADGES.push({ t0: s, t1: s + 1.6, n: 2, space: 'scr', x: b[0], y: b[1] });
   FOCUS.push({ t0: s, t1: s + 1.4, space: 'scr', rect: b });
-  s = say('（3）在弹出的选项中，根据电脑操作系统');
+  s = say('在弹出的选项中，根据电脑操作系统');
   BADGES.push({ t0: s, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
   FOCUS.push({ t0: s - 1.6, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });   // menu + sub-menus
   TIPS.push({ t0: s + 0.5, t1: T + 5.0, text: '根据电脑操作系统选择' });
