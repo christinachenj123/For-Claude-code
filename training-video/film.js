@@ -47,11 +47,12 @@ const win = (t, t0, t1, fin = 0.25, fout = 0.25) =>
   Math.min(clamp((t - t0) / fin), clamp((t1 - t) / fout));
 
 // ---------- reading time ----------
-// Training pace: chars / 4 + 1.5 s, never under 2.5 s. Latin letters count as half.
+// Video 1 (trial, user-approved): chars / 5 + 1 s, never under 2 s, in output seconds.
+// Latin letters count as half. Film time = output time x 1.2 (see SPEED).
 function readTime(text) {
   let n = 0;
   for (const ch of text.replace(/[【】]/g, '')) n += /[\x00-\x7F]/.test(ch) ? 0.5 : 1;
-  return Math.max(2.5, n / 4 + 1.5);
+  return 1.2 * Math.max(2, n / 5 + 1);
 }
 
 // =====================================================================
@@ -89,158 +90,160 @@ const [WCX, WCY] = sp(960, 540);                                         // cent
 
 // --- scenes, in seconds (all computed) ---
 // Recordings: A = 方式一 (portal → pop-up → download menu), B = 方式二 (platform page → download menu).
-// Real playback runs where the recording is continuous; where it is not (the card click was not recorded,
-// and B starts on a loaded page) a still with the pointer erased is shown and a synthetic pointer acts,
-// ending exactly where the real pointer is in the next recorded frame.
+// Each subtitle starts with its action (watch while reading); the picture only rests where the screen
+// naturally rests (a page just opened, a menu just shown). Where the recording is not continuous (the card
+// click was not recorded, B starts on a loaded page) a still with the pointer erased is shown and a
+// synthetic pointer acts, ending exactly where the real pointer is in the next recorded frame.
 const tTitle = 0;
-T = 7.2;
+T = 3.0;                              // the opening lines start while the title is still up
 const tStageIn = 6.6;
+const CARD = 1.8;                     // section card on screen (film seconds)
+const TYPE_DT = 0.06;                 // typing speed (film seconds per character)
 cam(0, 0, WCX, WCY, 1);
 cur(0, 0, 'scr', 1731, 622);          // the real pointer's position in A's portal frames
 still(0, 'A/0030');
 
 // Intro paragraph
 let s = say('苏电智伴IM客户端可从数字化门户登录进入后下载，');
-cam(s + 0.3, 15.5, WCX, WCY - 10, 1.05);
+cam(s + 0.3, 13, WCX, WCY - 10, 1.05);
 s = say('也可通过统一智能中枢微门户平台直接下载，两种方式任选其一。');
-TIPS.push({ t0: s + 1.6, t1: T + 0.3, text: '两种方式任选其一' });
-pause(1.0);
+TIPS.push({ t0: s + 1.0, t1: T + 0.2, text: '两种方式任选其一' });
 
 // ---- 方式一 ----
 let c0 = T;
-CARDS.push({ t0: c0, t1: c0 + 3.0, tag: '方式一', title: '从数字化门户登录进入下载' });
-STEP.push({ t: c0 + 0.4, i: 0 });
-T += 3.4;
+CARDS.push({ t0: c0, t1: c0 + CARD - 0.2, tag: '方式一', title: '从数字化门户登录进入下载' });
+STEP.push({ t: c0 + 0.3, i: 0 });
+T += CARD;
 
 s = say('（1）登录内网门户，进入数字化门户首页，');
-const tScrollEnd = play(s + 0.9, 'A', 30, 89);              // scroll down to 常用工具
+const tScrollEnd = play(s + 0.2, 'A', 30, 89);              // scroll down to 常用工具
 still(tScrollEnd, 'A_hold', { synth: true });
 
 {
-  s = say('点击【苏电智伴】卡片。', 4.8);
+  s = say('点击【苏电智伴】卡片。');
   const card = [956, 387, 1244, 744];
-  BADGES.push({ t0: s + 0.3, t1: s + 2.4, n: 1, space: 'scr', x: card[0], y: card[1] });
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'scr', rect: card });
-  cam(s + 0.2, 1.2, ...sp(1100, 560), 1.45);
-  cur(s + 0.8, 1.2, 'scr', 1100, 560);
-  click(s + 2.2, 'scr', 1100, 560);
-  const tPop = s + 2.45;
-  still(tPop, 'A_modal', { synth: true, fade: 0.4, pop: [195, 200, 1731, 997] });
-  cur(tPop + 0.35, 0.8, 'scr', 861, 598);                   // to the real pointer in frame 178
-  still(tPop + 1.2, 'A/0178');
-  cam(tPop + 0.1, 1.2, WCX, WCY, 1.0);
+  BADGES.push({ t0: s, t1: s + 1.3, n: 1, space: 'scr', x: card[0], y: card[1] });
+  FOCUS.push({ t0: s, t1: s + 1.3, space: 'scr', rect: card });
+  cam(s, 0.9, ...sp(1100, 560), 1.4);
+  cur(s + 0.1, 1.0, 'scr', 1100, 560);
+  click(s + 1.15, 'scr', 1100, 560);
+  const tPop = s + 1.3;
+  still(tPop, 'A_modal', { synth: true, fade: 0.35, pop: [195, 200, 1731, 997] });
+  cur(tPop + 0.2, 0.6, 'scr', 861, 598);                    // to the real pointer in frame 178
+  still(tPop + 0.85, 'A/0178');
+  cam(tPop, 1.0, WCX, WCY, 1.0);
 }
 
 s = say('（2）门户内弹出苏电智伴·通用智能体平台页面，');
-FOCUS.push({ t0: s + 0.4, t1: T - 0.2, space: 'scr', rect: [195, 200, 1731, 997] });
+FOCUS.push({ t0: s + 0.2, t1: T - 0.2, space: 'scr', rect: [195, 200, 1731, 997] });
+cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while the pop-up rests
 
 {
-  s = say('点击【下载客户端】按钮。', 5.0);
+  s = say('点击【下载客户端】按钮。');
   const b = [800, 557, 940, 603];
-  BADGES.push({ t0: s + 0.3, t1: T, n: 2, space: 'scr', x: b[0], y: b[1] });
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'scr', rect: b });
-  cam(s + 0.2, 1.2, ...sp(870, 600), 1.9);
-  const te = play(s + 1.2, 'A', 178, 206);
-  click(s + 1.2 + 23 / FPS_REC, 'scr', 872, 578);
+  BADGES.push({ t0: s, t1: s + 1.6, n: 2, space: 'scr', x: b[0], y: b[1] });
+  FOCUS.push({ t0: s, t1: s + 1.4, space: 'scr', rect: b });
+  cam(s, 0.9, ...sp(880, 640), 1.8);
+  const te = play(s + 0.3, 'A', 178, 206);
+  click(s + 0.3 + 23 / FPS_REC, 'scr', 872, 578);
   still(te, 'A/0206');
 }
 
 {
   s = say('（3）在弹出的选项中，根据电脑操作系统');
   const m = [776, 640, 960, 715];
-  BADGES.push({ t0: s + 0.3, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
-  FOCUS.push({ t0: s + 0.3, t1: T, space: 'scr', rect: m });
-  TIPS.push({ t0: s + 1.2, t1: T + 9.0, text: '根据电脑操作系统选择' });
-  cam(s + 0.2, 1.0, ...sp(900, 690), 1.9);
+  BADGES.push({ t0: s, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
+  FOCUS.push({ t0: s, t1: T, space: 'scr', rect: m });
+  TIPS.push({ t0: s + 0.5, t1: T + 5.0, text: '根据电脑操作系统选择' });
+  cam(s, 0.8, ...sp(900, 690), 1.8);
 }
 {
-  s = say('选择【Windows客户端】或【国产信创客户端】进行下载，', 8.5);
+  s = say('选择【Windows客户端】或【国产信创客户端】进行下载，');
   FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [776, 640, 1110, 905] });
-  cam(s + 0.1, 1.0, ...sp(945, 770), 1.6);
-  const te = play(s + 0.6, 'A', 206, 313);
+  cam(s, 0.8, ...sp(945, 770), 1.6);
+  const te = play(s + 0.1, 'A', 206, 313);
   still(te, 'A/0313');
 }
 s = say('下载成功后根据提示一步一步安装。');
-cam(s + 0.5, 1.6, WCX, WCY, 1);
-pause(1.0);
+cam(s + 0.2, 1.2, WCX, WCY, 1);
 
 // ---- 方式二 ----
 c0 = T;
-CARDS.push({ t0: c0, t1: c0 + 3.0, tag: '方式二', title: '通过统一智能中枢微门户平台下载' });
-STEP.push({ t: c0 + 0.4, i: 1 });
-still(c0 + 0.6, 'B_blank', { synth: true });
-cur(c0 + 0.6, 0, 'scr', 1000, 880);
-T += 3.4;
+CARDS.push({ t0: c0, t1: c0 + CARD - 0.2, tag: '方式二', title: '通过统一智能中枢微门户平台下载' });
+STEP.push({ t: c0 + 0.3, i: 1 });
+still(c0 + 0.45, 'B_blank', { synth: true });
+cur(c0 + 0.45, 0, 'scr', 1000, 880);
+T += CARD;
 
 {
-  s = say('地址：http://agent.js.sgcc.com.cn', 8.0);
-  var tAddrClick = s + 1.9, tType0 = s + 2.2, URL = 'http://agent.js.sgcc.com.cn';
-  var tType1 = tType0 + URL.length * 0.075, tEnter = tType1 + 0.45;
-  cam(s + 0.3, 1.3, ...sp(560, 66), 1.8);
-  cur(s + 0.7, 1.1, 'scr', 520, 66);
+  s = say('地址：http://agent.js.sgcc.com.cn');
+  var URL = 'http://agent.js.sgcc.com.cn';
+  var tAddrClick = s + 0.75, tType0 = s + 0.95;
+  var tType1 = tType0 + URL.length * TYPE_DT, tEnter = tType1 + 0.25;
+  cam(s, 0.8, ...sp(560, 66), 1.8);
+  cur(s, 0.7, 'scr', 520, 66);
   click(tAddrClick, 'scr', 520, 66);
-  FOCUS.push({ t0: s + 0.4, t1: tEnter + 0.2, space: 'scr', rect: [118, 50, 1660, 81] });
-  still(tEnter + 0.1, 'B_page', { synth: true, fade: 0.35 });
-  cam(tEnter + 0.4, 1.4, ...sp(900, 420), 1.15);
-  cur(tEnter + 0.6, 1.3, 'scr', 867, 395);                  // to the real pointer in frame 199
-  still(tEnter + 2.0, 'B/0199');
+  FOCUS.push({ t0: s, t1: tEnter + 0.15, space: 'scr', rect: [118, 50, 1660, 81] });
+  still(tEnter + 0.05, 'B_page', { synth: true, fade: 0.3 });
+  cam(tEnter + 0.2, 1.0, ...sp(900, 420), 1.15);
+  cur(tEnter + 0.3, 0.9, 'scr', 867, 395);                  // to the real pointer in frame 199
+  still(tEnter + 1.25, 'B/0199');
 }
 {
-  s = say('点击【下载客户端】按钮，弹出选项，', 5.6);
+  s = say('点击【下载客户端】按钮，弹出选项，');
   const b = [800, 403, 940, 447];
-  BADGES.push({ t0: s + 0.3, t1: s + 2.6, n: 1, space: 'scr', x: b[0], y: b[1] });
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'scr', rect: b });
-  cam(s + 0.2, 1.2, ...sp(870, 450), 1.9);
-  const te = play(s + 1.4, 'B', 199, 216);
-  click(s + 1.4 + 2 / FPS_REC, 'scr', 869, 398);
+  BADGES.push({ t0: s, t1: s + 1.2, n: 1, space: 'scr', x: b[0], y: b[1] });
+  FOCUS.push({ t0: s, t1: s + 1.0, space: 'scr', rect: b });
+  cam(s, 0.9, ...sp(880, 480), 1.8);
+  const te = play(s + 0.3, 'B', 199, 216);
+  click(s + 0.3 + 2 / FPS_REC, 'scr', 869, 398);
   still(te, 'B/0216');
-  BADGES.push({ t0: s + 2.7, t1: T + 6.0, n: 2, space: 'scr', x: 776, y: 492 });
-  FOCUS.push({ t0: s + 2.6, t1: T, space: 'scr', rect: [776, 492, 960, 562] });
+  BADGES.push({ t0: s + 1.3, t1: T + 5.5, n: 2, space: 'scr', x: 776, y: 492 });
+  FOCUS.push({ t0: s + 1.2, t1: T, space: 'scr', rect: [776, 492, 960, 562] });
 }
 {
-  s = say('根据实际情况选择版本下载，', 6.0);
-  FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [776, 492, 1140, 735] });
-  cam(s + 0.1, 1.0, ...sp(955, 615), 1.6);
-  const te = play(s + 0.3, 'B', 216, 348);
+  s = say('根据实际情况选择版本下载，');
+  FOCUS.push({ t0: s, t1: s + 5.6, space: 'scr', rect: [776, 492, 1140, 735] });
+  cam(s, 0.8, ...sp(955, 615), 1.6);
+  const te = play(s + 0.1, 'B', 216, 348);
   still(te, 'B/0348');
 }
 s = say('下载成功后根据提示一步一步安装。');
-cam(s + 0.5, 1.6, WCX, WCY, 1);
-pause(1.0);
+cam(s + 0.2, 1.2, WCX, WCY, 1);
 
 // ---- 安装登录 ----
 c0 = T;
-CARDS.push({ t0: c0, t1: c0 + 3.0, tag: '安装登录', title: '安装成功后，登录客户端' });
-STEP.push({ t: c0 + 0.4, i: 2 });
-const tDesk = c0 + 0.6;   // the browser minimises during the card
+CARDS.push({ t0: c0, t1: c0 + CARD - 0.2, tag: '安装登录', title: '安装成功后，登录客户端' });
+STEP.push({ t: c0 + 0.3, i: 2 });
+const tDesk = c0 + 0.45;  // the browser minimises during the card
 cur(c0 + 1.0, 0, 'scr', 1180, 640);
-T += 3.4;
+T += CARD;
 
 {
-  s = say('安装成功后，双击【苏电IM】桌面图标，', 6.2);
+  s = say('安装成功后，双击【苏电IM】桌面图标，');
   const ic = [ICON.x + 8, ICON.y + 8, ICON.x + 118, ICON.y + 112];   // icon + label
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.8, space: 'scr', rect: ic });
-  BADGES.push({ t0: s + 0.3, t1: s + 2.9, n: 1, space: 'scr', x: ic[0], y: ic[1] });
-  cam(s + 0.3, 1.2, ...sp(260, 200), 1.9);
-  cur(s + 0.6, 1.3, 'scr', ICON.x + 52, ICON.y + 48);
-  click(s + 2.1, 'scr', ICON.x + 52, ICON.y + 48);
-  click(s + 2.3, 'scr', ICON.x + 52, ICON.y + 48);
-  var tLogin = s + 2.7;
-  cam(s + 2.7, 1.3, ...lgP(470, 200), 1.25);
+  FOCUS.push({ t0: s, t1: s + 1.6, space: 'scr', rect: ic });
+  BADGES.push({ t0: s, t1: s + 1.7, n: 1, space: 'scr', x: ic[0], y: ic[1] });
+  cam(s, 0.9, ...sp(260, 200), 1.9);
+  cur(s + 0.1, 1.0, 'scr', ICON.x + 52, ICON.y + 48);
+  click(s + 1.2, 'scr', ICON.x + 52, ICON.y + 48);
+  click(s + 1.4, 'scr', ICON.x + 52, ICON.y + 48);
+  var tLogin = s + 1.7;
+  cam(s + 1.7, 1.0, ...lgP(470, 200), 1.25);
 }
 {
-  s = say('输入统一权限用户名、密码登录。', 7.6);
-  var tAcc = s + 1.4, tAccType = [s + 1.7, s + 2.9], tPw = s + 3.4, tPwType = [s + 3.7, s + 4.8];
-  var tLoginClick = s + 6.0;
-  cur(s + 0.5, 0.9, 'login', 470, 151);
+  s = say('输入统一权限用户名、密码登录。');
+  var tAcc = s + 0.6, tAccType = [s + 0.8, s + 1.6], tPw = s + 1.9, tPwType = [s + 2.1, s + 2.9];
+  var tLoginClick = s + 3.8;
+  cur(s, 0.6, 'login', 470, 151);
   click(tAcc, 'login', 470, 151);
-  cur(s + 3.0, 0.4, 'login', 470, 221);
+  cur(s + 1.6, 0.3, 'login', 470, 221);
   click(tPw, 'login', 470, 221);
-  cur(s + 5.0, 0.8, 'login', 500, 305);
+  cur(s + 3.0, 0.6, 'login', 500, 305);
   click(tLoginClick, 'login', 500, 305);
-  FOCUS.push({ t0: s + 4.9, t1: T, space: 'login', rect: [343, 287, 667, 325] });
+  FOCUS.push({ t0: s + 2.9, t1: T, space: 'login', rect: [343, 287, 667, 325] });
 }
-pause(0.8);
+pause(0.6);
 
 // ---- 下一节 (no recap) ----
 const tRecap = T;
@@ -416,7 +419,7 @@ function drawScreenFrame(g, t, R, F) {
     g.fillText('新标签页', 56, 23);
     if (t >= tAddrClick) {
       g.strokeStyle = '#0B57D0'; g.lineWidth = 2; rr(g, 119, 51, 1540, 29, 14); g.stroke();
-      const n = t < tType0 ? 0 : Math.min(URL.length, Math.floor((t - tType0) / 0.075) + 1);
+      const n = t < tType0 ? 0 : Math.min(URL.length, Math.floor((t - tType0) / TYPE_DT) + 1);
       const txt = URL.slice(0, n);
       g.font = '400 17px "Noto Sans SC"'; g.fillText(txt, 150, 66);
       if (Math.floor(t * 2.2) % 2 === 0 || n < URL.length) g.fillRect(151 + g.measureText(txt).width, 57, 1.3, 18);
@@ -645,7 +648,7 @@ function drawSubtitle(g, t) {
   }
 }
 
-const STEPS = ['方式一  门户下载', '方式二  微门户下载', '安装登录'];
+const STEPS = ['方式一  数字化门户下载', '方式二  微门户下载', '安装登录'];
 function drawTopBar(g, t) {
   const a = clamp((t - tStageIn) / 0.6);
   if (a <= 0) return;
