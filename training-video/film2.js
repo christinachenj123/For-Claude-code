@@ -110,7 +110,8 @@ const [WCX, WCY] = sp(960, 540);                                         // cent
 const tTitle = 0;
 const tStageIn = 6.6;
 T = tStageIn + 0.3;
-const CARD = 1.8;                     // section card on screen (film seconds)
+const CARD = 3.4;                     // section card on screen (film seconds; ~2.8 s in the output)
+const PRE_CARD = 0.9;                 // the previous picture holds before a card comes up
 const LEAD = 0.6;                     // a line leads its action by this much (film seconds)
 const TYPE_DT = 0.1;                  // typing speed (film seconds per character)
 const TYPES = [];                     // simulated typing: {space, rect, text, px, tClick, t0, tEnd, on}
@@ -120,6 +121,7 @@ cur(0, 0, 'scr', 960, 600);
 still(0, fr('21', 0));
 
 const section = (tag, title, step) => {
+  if (CARDS.length) T += PRE_CARD;
   CARDS.push({ t0: T, t1: T + CARD - 0.2, tag, title });
   STEP.push({ t: T + 0.3, i: step });
   T += CARD;
@@ -173,7 +175,7 @@ focus(t1, t2 + 0.6, 'scr', [660, 222, 1268, 340]);
 te = play(t2, '21', 1530, 1670, { fade: 0.3 });
 focus(ft('21', 1530, 1572, t2), ft('21', 1530, 1602, t2), 'scr', [1196, 834, 1268, 878]);
 click(ft('21', 1530, 1599, t2), 'scr', 1228, 858);
-focus(ft('21', 1530, 1608, t2), te + 0.6, 'scr', [780, 56, 998, 94]);          // 智能体创建成功
+focus(ft('21', 1530, 1608, t2), te + 0.6, 'scr', [846, 52, 1078, 100]);         // 智能体创建成功
 still(te, fr('21', 1670)); after(te);
 
 // ================= 2.2.1 选择模型 =================
@@ -181,14 +183,15 @@ section('2.2 聊天', '2.2.1 选择模型', 2);
 still(T - CARD + 0.45, fr('221', 30));
 s = say('点击【讨论/聊天】菜单，可直接提问，');
 focus(s, s + 2.4, 'scr', [24, 228, 224, 262]);
-t1 = play(s + 0.3, '221', 30, 105);
-t2 = play(t1, '221', 245, 300, { fade: 0.25 });
-focus(t1, ft('221', 245, 296, t1), 'scr', [920, 496, 1166, 532]);
-still(t2, fr('221', 300)); after(t2);
+t1 = play(s + 0.3, '221', 30, 135);
+still(t1, fr('221', 135)); after(t1);
 
 s = say('系统会根据实际情况和资源分配，自动选择最佳模型回答。');
-te = play(s + 0.2, '221', 1090, 1225, { fade: 0.3 });
-focus(s + 0.6, T - 0.1, 'scr', [500, 120, 1340, 800]);
+t1 = play(s + 0.1, '221', 135, 300);                          // the model list, then a suggested question
+focus(ft('221', 135, 150, s + 0.1), ft('221', 135, 245, s + 0.1), 'scr', [1070, 136, 1484, 246]);
+focus(ft('221', 135, 255, s + 0.1), ft('221', 135, 296, s + 0.1), 'scr', [920, 496, 1166, 532]);
+te = play(t1, '221', 1090, 1225, { fade: 0.3, speed: 1.5 });
+focus(t1 + 0.4, Math.max(T, te) - 0.1, 'scr', [500, 120, 1340, 800]);   // the answer
 still(te, fr('221', 1225)); after(te);
 
 // ================= 2.2.2 个人知识库 (screenshots) =================
@@ -252,7 +255,10 @@ still(te, fr('224', 150)); after(te);
 s = say('填写账号、密码并保存；');
 te = play(s + 0.1, '224', 150, 292);
 {
-  const tA = ft('224', 150, 220, s + 0.1), tP = ft('224', 150, 252, s + 0.1);
+  const tA = ft('224', 150, 220, s + 0.1), tP = ft('224', 150, 252, s + 0.1), tT = ft('224', 150, 187, s + 0.1);
+  TYPES.push({ space: 'scr', rect: [289, 303, 630, 325], text: 'http://mail.js.sgcc.com.cn', px: 15, dt: 0.05, blur: 4,
+    tClick: tT, t0: tT + 0.1, tEnd: 1e9, on: ['224'] });
+  focus(tT - 0.3, tA - 0.4, 'scr', [278, 270, 640, 336]);
   TYPES.push({ space: 'scr', rect: [289, 506, 628, 527], text: 'zhangsan', px: 15, tClick: tA, t0: tA + 0.2, tEnd: 1e9, on: ['224'] });
   TYPES.push({ space: 'scr', rect: [289, 588, 612, 609], text: '••••••••', px: 15, tClick: tP, t0: tP + 0.2, tEnd: 1e9, on: ['224'] });
   focus(tA - 0.4, te - 1.0, 'scr', [278, 488, 640, 620]);
@@ -473,10 +479,12 @@ function drawScreenFrame(g, t, R, F) {
     const [x1, y1] = shot ? shotP(ty.space.slice(5), ty.rect[0], ty.rect[1]) : ty.rect.slice(0, 2);
     const [x2, y2] = shot ? shotP(ty.space.slice(5), ty.rect[2], ty.rect[3]) : ty.rect.slice(2, 4);
     g.fillStyle = '#FFFFFF'; g.fillRect(x1, y1, x2 - x1, y2 - y1);
-    const n = t < ty.t0 ? 0 : Math.min(ty.text.length, Math.floor((t - ty.t0) / TYPE_DT) + 1);
+    const n = t < ty.t0 ? 0 : Math.min(ty.text.length, Math.floor((t - ty.t0) / (ty.dt || TYPE_DT)) + 1);
     const txt = ty.text.slice(0, n), px = ty.px * k, cy = (y1 + y2) / 2;
     g.fillStyle = '#1E2933'; g.textBaseline = 'middle'; g.font = `400 ${px}px "Noto Sans SC"`;
+    if (ty.blur) { g.save(); g.filter = `blur(${ty.blur}px)`; }   // typed, but not readable
     g.fillText(txt, x1 + 6 * k, cy + 1);
+    if (ty.blur) g.restore();
     if (Math.floor(t * 2.2) % 2 === 0 || n < ty.text.length) g.fillRect(x1 + 7 * k + g.measureText(txt).width, cy - px * 0.6, 1.4, px * 1.2);
   }
   for (const m of MARKS) {        // selected state: green tick box or radio
