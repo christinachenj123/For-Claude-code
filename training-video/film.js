@@ -190,26 +190,17 @@ T += CARD;
   still(tEnter + 1.25, 'B/0199');
 }
 {
-  s = say('点击【下载客户端】按钮，弹出选项，');
+  // 方式二 is the same as 方式一 from here on: one line, one continuous take
+  s = say('点击【下载客户端】按钮，根据实际情况选择版本下载，下载成功后完成安装。');
   const b = [800, 403, 940, 447];
-  BADGES.push({ t0: s, t1: s + 1.2, n: 1, space: 'scr', x: b[0], y: b[1] });
   FOCUS.push({ t0: s, t1: s + 1.0, space: 'scr', rect: b });
-  cam(s, 0.9, ...sp(880, 480), 1.8);
-  const te = play(s + 0.3, 'B', 199, 216);
+  cam(s, 0.9, ...sp(900, 520), 1.6);
+  const te = play(s + 0.3, 'B', 199, 348);
   click(s + 0.3 + 2 / FPS_REC, 'scr', 869, 398);
-  still(te, 'B/0216');
-  BADGES.push({ t0: s + 1.3, t1: T + 5.5, n: 2, space: 'scr', x: 776, y: 492 });
-  FOCUS.push({ t0: s + 1.2, t1: T, space: 'scr', rect: [776, 492, 960, 562] });
-}
-{
-  s = say('根据实际情况选择版本下载，');
-  FOCUS.push({ t0: s, t1: s + 5.6, space: 'scr', rect: [776, 492, 1140, 735] });
-  cam(s, 0.8, ...sp(955, 615), 1.6);
-  const te = play(s + 0.1, 'B', 216, 348);
+  FOCUS.push({ t0: s + 1.2, t1: te + 0.6, space: 'scr', rect: [776, 492, 1140, 735] });
   still(te, 'B/0348');
+  cam(te + 0.3, 1.2, WCX, WCY, 1);
 }
-s = say('下载成功后根据提示一步一步安装。');
-cam(s + 0.2, 1.2, WCX, WCY, 1);
 
 // ---- 安装登录 ----
 c0 = T;
