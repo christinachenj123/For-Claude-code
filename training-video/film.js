@@ -19,18 +19,16 @@ const C = {
 const STAGE = { x: 40, y: 84, w: 1840, h: 820, r: 18 };   // the "screen" area
 const SUBY = 990;                                          // subtitle centre line
 
-// Browser window inside the stage (world = stage pixels)
-const BR = { x: 244, y: 45, s: 1.0, chrome: 78, cw: 1352, ch: 651 };   // 1:1 for sharp screenshots
-// Login window on the desktop
-const LG = { x: 411, y: 150, s: 1.45 };
-// Desktop icon
-const ICON = { x: 70, y: 40, size: 78 };
-
-// img5 (platform page, menu open) aligned onto img4's pop-up, measured from button positions
-const A5 = { x: 154.0, y: 104.7, s: 0.7796 };
-const p5to4 = (x, y) => [A5.x + x * A5.s, A5.y + y * A5.s];
-const IMG3S = 1352 / 1256; // img3 is scaled to the content width
-const HD = 1;               // original screenshots (set 2 to use the 2x ones in assets/hd)
+// The recorded screen (1920x1080 screen pixels, "scr") inside the stage (world = stage pixels)
+const SCR = { s: 0.735 };
+SCR.x = (1840 - 1920 * SCR.s) / 2; SCR.y = (820 - 1080 * SCR.s) / 2;
+const sp = (x, y) => [SCR.x + x * SCR.s, SCR.y + y * SCR.s];
+const FPS_REC = 25;
+// Login window on the desktop (screen pixels; img7 is 702x359)
+const LG = { x: 486, y: 277, s: 1.35 };
+// Desktop icon tile (the real desktop icon, 184 px, drawn at 128 px)
+const ICON = { x: 10, y: 6, size: 128 };
+const HD = 1;               // original screenshots
 // drawImage in logical (1x) pixels: (x, y) | (x, y, w, h) | (sx, sy, sw, sh, dx, dy, dw, dh)
 function D(g, im, ...a) {
   if (a.length === 2) return g.drawImage(im, a[0], a[1], im.width / HD, im.height / HD);
@@ -68,6 +66,9 @@ const CLICKS = [];        // {t, space, x, y}
 const CAM = [];           // camera keys: {t, d, cx, cy, z}
 const CUR = [];           // cursor keys: {t, d, space, x, y}  (moves to x,y over d)
 const STEP = [];          // progress bar: {t, i}
+const REC = [];           // what the screen shows: {t, src, f0, f1} (playback) or {t, img, synth, fade, pop} (still)
+const play = (t, src, f0, f1) => { REC.push({ t, src, f0, f1 }); return t + (f1 - f0) / FPS_REC; };
+const still = (t, img, o = {}) => REC.push({ t, img, synth: !!o.synth, fade: o.fade || 0, pop: o.pop });
 
 let T = 0;
 function say(text, minDur = 0) {
@@ -83,22 +84,24 @@ const cur = (t, d, space, x, y) => CUR.push({ t, d, space, x, y });
 const click = (t, space, x, y) => CLICKS.push({ t, space, x, y });
 
 // world helpers for cameras
-const brC = (x, y) => [BR.x + x * BR.s, BR.y + (BR.chrome + y) * BR.s];  // content px → world
-const brU = (x, y) => [BR.x + x * BR.s, BR.y + y * BR.s];                // window units → world
-const lgP = (x, y) => [LG.x + x * LG.s, LG.y + y * LG.s];
-const WCX = 920, WCY = 410;                                              // world centre
+const lgP = (x, y) => sp(LG.x + x * LG.s, LG.y + y * LG.s);
+const [WCX, WCY] = sp(960, 540);                                         // centre of the screen
 
 // --- scenes, in seconds (all computed) ---
+// Recordings: A = 方式一 (portal → pop-up → download menu), B = 方式二 (platform page → download menu).
+// Real playback runs where the recording is continuous; where it is not (the card click was not recorded,
+// and B starts on a loaded page) a still with the pointer erased is shown and a synthetic pointer acts,
+// ending exactly where the real pointer is in the next recorded frame.
 const tTitle = 0;
 T = 7.2;
 const tStageIn = 6.6;
-const PORTAL = 'http://msa.js.sgcc.com.cn:6001/szhmh';   // 数字化门户地址
 cam(0, 0, WCX, WCY, 1);
-cur(0, 0, 'world', 1500, 700);
+cur(0, 0, 'scr', 1731, 622);          // the real pointer's position in A's portal frames
+still(0, 'A/0030');
 
 // Intro paragraph
 let s = say('苏电智伴IM客户端可从数字化门户登录进入后下载，');
-cam(s + 0.3, 15.5, WCX, WCY - 30, 1.07);
+cam(s + 0.3, 15.5, WCX, WCY - 10, 1.05);
 s = say('也可通过统一智能中枢微门户平台直接下载，两种方式任选其一。');
 TIPS.push({ t0: s + 1.6, t1: T + 0.3, text: '两种方式任选其一' });
 pause(1.0);
@@ -110,127 +113,118 @@ STEP.push({ t: c0 + 0.4, i: 0 });
 T += 3.4;
 
 s = say('（1）登录内网门户，进入数字化门户首页，');
-cur(s + 0.8, 1.4, 'content', 560, 120);
-cam(s + 0.5, 2.5, ...brC(676, 300), 1.08);
+const tScrollEnd = play(s + 0.9, 'A', 30, 89);              // scroll down to 常用工具
+still(tScrollEnd, 'A_hold', { synth: true });
 
 {
   s = say('点击【苏电智伴】卡片。', 4.8);
-  const card = [612 * IMG3S, 91 * IMG3S, 924 * IMG3S, 435 * IMG3S];
-  const [cx, cy] = [(card[0] + card[2]) / 2, (card[1] + card[3]) / 2];
-  BADGES.push({ t0: s + 0.3, t1: T, n: 1, space: 'content', x: card[0], y: card[1] });
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.5, space: 'content', rect: card });
-  cam(s + 0.3, 1.2, ...brC(cx, cy - 20), 1.3);
-  cur(s + 0.8, 1.2, 'content', cx - 10, cy - 30);
-  click(s + 2.2, 'content', cx - 10, cy - 30);
-  var tModal = s + 2.45;
-  cam(s + 2.8, 1.2, ...brC(676, 330), 1.02);
+  const card = [956, 387, 1244, 744];
+  BADGES.push({ t0: s + 0.3, t1: s + 2.4, n: 1, space: 'scr', x: card[0], y: card[1] });
+  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'scr', rect: card });
+  cam(s + 0.2, 1.2, ...sp(1100, 560), 1.45);
+  cur(s + 0.8, 1.2, 'scr', 1100, 560);
+  click(s + 2.2, 'scr', 1100, 560);
+  const tPop = s + 2.45;
+  still(tPop, 'A_modal', { synth: true, fade: 0.4, pop: [195, 200, 1731, 997] });
+  cur(tPop + 0.35, 0.8, 'scr', 861, 598);                   // to the real pointer in frame 178
+  still(tPop + 1.2, 'A/0178');
+  cam(tPop + 0.1, 1.2, WCX, WCY, 1.0);
 }
 
-{
-  s = say('（2）门户内弹出苏电智伴·通用智能体平台页面，');
-  FOCUS.push({ t0: s + 0.4, t1: T - 0.2, space: 'content', rect: [115, 72, 1222, 645] });
-  cur(s + 1.0, 1.2, 'content', 860, 210);
-}
+s = say('（2）门户内弹出苏电智伴·通用智能体平台页面，');
+FOCUS.push({ t0: s + 0.4, t1: T - 0.2, space: 'scr', rect: [195, 200, 1731, 997] });
 
 {
   s = say('点击【下载客户端】按钮。', 5.0);
-  const b = [542, 320, 662, 369];
-  BADGES.push({ t0: s + 0.3, t1: T, n: 2, space: 'content', x: b[0], y: b[1] });
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'content', rect: b });
-  cam(s + 0.3, 1.2, ...brC(602, 344), 1.55);
-  cur(s + 0.8, 1.2, 'content', 598, 346);
-  click(s + 2.2, 'content', 598, 346);
-  var tMenu1 = s + 2.35;
-  cam(s + 2.7, 1.2, ...brC(602, 400), 1.85);
+  const b = [800, 557, 940, 603];
+  BADGES.push({ t0: s + 0.3, t1: T, n: 2, space: 'scr', x: b[0], y: b[1] });
+  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'scr', rect: b });
+  cam(s + 0.2, 1.2, ...sp(870, 600), 1.9);
+  const te = play(s + 1.2, 'A', 178, 206);
+  click(s + 1.2 + 23 / FPS_REC, 'scr', 872, 578);
+  still(te, 'A/0206');
 }
 
 {
   s = say('（3）在弹出的选项中，根据电脑操作系统');
-  const m = [...p5to4(488, 346), ...p5to4(662, 460)];
-  BADGES.push({ t0: s + 0.3, t1: T + 9.2, n: 3, space: 'content', x: m[0], y: m[1] });
-  FOCUS.push({ t0: s + 0.3, t1: T + 9.0, space: 'content', rect: m });
+  const m = [776, 640, 960, 715];
+  BADGES.push({ t0: s + 0.3, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
+  FOCUS.push({ t0: s + 0.3, t1: T, space: 'scr', rect: m });
   TIPS.push({ t0: s + 1.2, t1: T + 9.0, text: '根据电脑操作系统选择' });
+  cam(s + 0.2, 1.0, ...sp(900, 690), 1.9);
 }
 {
   s = say('选择【Windows客户端】或【国产信创客户端】进行下载，', 8.5);
-  const [wx, wy] = p5to4(560, 381), [gx, gy] = p5to4(560, 423);
-  cur(s + 0.8, 1.0, 'content', wx, wy);
-  var hoverRows1 = [
-    { t0: s + 1.7, t1: s + 4.4, rect: [...p5to4(494, 362), ...p5to4(656, 401)] },
-    { t0: s + 4.6, t1: s + 8.3, rect: [...p5to4(494, 404), ...p5to4(656, 443)] },
-  ];
-  cur(s + 4.0, 0.9, 'content', gx, gy);
+  FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [776, 640, 1110, 905] });
+  cam(s + 0.1, 1.0, ...sp(945, 770), 1.6);
+  const te = play(s + 0.6, 'A', 206, 313);
+  still(te, 'A/0313');
 }
-{
-  s = say('下载成功后根据提示一步一步安装。');
-  cam(s + 0.5, 1.6, WCX, WCY, 1);
-  cur(s + 0.6, 1.4, 'content', 900, 560);
-}
+s = say('下载成功后根据提示一步一步安装。');
+cam(s + 0.5, 1.6, WCX, WCY, 1);
 pause(1.0);
 
 // ---- 方式二 ----
 c0 = T;
 CARDS.push({ t0: c0, t1: c0 + 3.0, tag: '方式二', title: '通过统一智能中枢微门户平台下载' });
 STEP.push({ t: c0 + 0.4, i: 1 });
+still(c0 + 0.6, 'B_blank', { synth: true });
+cur(c0 + 0.6, 0, 'scr', 1000, 880);
 T += 3.4;
 
 {
   s = say('地址：http://agent.js.sgcc.com.cn', 8.0);
-  var tAddrClick = s + 2.0, tType0 = s + 2.4, URL = 'http://agent.js.sgcc.com.cn';
-  var tType1 = tType0 + URL.length * 0.075, tEnter = tType1 + 0.45, tLoad = tEnter + 0.25;
-  cam(s + 0.4, 1.3, ...brU(560, 58), 1.75);
-  cur(s + 0.9, 1.0, 'units', 420, 58);
-  click(tAddrClick, 'units', 420, 58);
-  FOCUS.push({ t0: s + 0.5, t1: tEnter + 0.2, space: 'units', rect: [150, 44, 1300, 72] });
-  cam(tLoad + 0.2, 1.4, ...brC(676, 250), 1.08);
-  cur(tLoad + 0.4, 1.0, 'content', 980, 140);
+  var tAddrClick = s + 1.9, tType0 = s + 2.2, URL = 'http://agent.js.sgcc.com.cn';
+  var tType1 = tType0 + URL.length * 0.075, tEnter = tType1 + 0.45;
+  cam(s + 0.3, 1.3, ...sp(560, 66), 1.8);
+  cur(s + 0.7, 1.1, 'scr', 520, 66);
+  click(tAddrClick, 'scr', 520, 66);
+  FOCUS.push({ t0: s + 0.4, t1: tEnter + 0.2, space: 'scr', rect: [118, 50, 1660, 81] });
+  still(tEnter + 0.1, 'B_page', { synth: true, fade: 0.35 });
+  cam(tEnter + 0.4, 1.4, ...sp(900, 420), 1.15);
+  cur(tEnter + 0.6, 1.3, 'scr', 867, 395);                  // to the real pointer in frame 199
+  still(tEnter + 2.0, 'B/0199');
 }
 {
   s = say('点击【下载客户端】按钮，弹出选项，', 5.6);
-  const b = [556, 214, 657, 247];
-  BADGES.push({ t0: s + 0.3, t1: T + 10.5, n: 1, space: 'content', x: b[0], y: b[1] });
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'content', rect: b });
-  cam(s + 0.3, 1.2, ...brC(606, 231), 1.6);
-  cur(s + 0.8, 1.2, 'content', 603, 233);
-  click(s + 2.2, 'content', 603, 233);
-  var tMenu2 = s + 2.35;
-  cam(s + 2.7, 1.2, ...brC(606, 290), 1.85);
-  FOCUS.push({ t0: s + 2.6, t1: T + 10.3, space: 'content', rect: [544, 270, 672, 383] });
+  const b = [800, 403, 940, 447];
+  BADGES.push({ t0: s + 0.3, t1: s + 2.6, n: 1, space: 'scr', x: b[0], y: b[1] });
+  FOCUS.push({ t0: s + 0.3, t1: s + 2.4, space: 'scr', rect: b });
+  cam(s + 0.2, 1.2, ...sp(870, 450), 1.9);
+  const te = play(s + 1.4, 'B', 199, 216);
+  click(s + 1.4 + 2 / FPS_REC, 'scr', 869, 398);
+  still(te, 'B/0216');
+  BADGES.push({ t0: s + 2.7, t1: T + 6.0, n: 2, space: 'scr', x: 776, y: 492 });
+  FOCUS.push({ t0: s + 2.6, t1: T, space: 'scr', rect: [776, 492, 960, 562] });
 }
 {
   s = say('根据实际情况选择版本下载，', 6.0);
-  var hoverRows2 = [
-    { t0: s + 1.0, t1: s + 2.6, rect: [550, 276, 666, 306] },
-    { t0: s + 2.8, t1: s + 4.2, rect: [550, 309, 666, 339] },
-    { t0: s + 4.4, t1: s + 5.9, rect: [550, 342, 666, 372] },
-  ];
-  cur(s + 0.6, 0.8, 'content', 600, 291);
-  cur(s + 2.6, 0.6, 'content', 600, 324);
-  cur(s + 4.2, 0.6, 'content', 600, 357);
+  FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [776, 492, 1140, 735] });
+  cam(s + 0.1, 1.0, ...sp(955, 615), 1.6);
+  const te = play(s + 0.3, 'B', 216, 348);
+  still(te, 'B/0348');
 }
-{
-  s = say('下载成功后根据提示一步一步安装。');
-  cam(s + 0.5, 1.6, WCX, WCY, 1);
-  cur(s + 0.6, 1.4, 'content', 900, 440);
-}
+s = say('下载成功后根据提示一步一步安装。');
+cam(s + 0.5, 1.6, WCX, WCY, 1);
 pause(1.0);
 
 // ---- 安装登录 ----
 c0 = T;
 CARDS.push({ t0: c0, t1: c0 + 3.0, tag: '安装登录', title: '安装成功后，登录客户端' });
 STEP.push({ t: c0 + 0.4, i: 2 });
-const tDesk = c0 + 0.6;   // browser minimises during the card
+const tDesk = c0 + 0.6;   // the browser minimises during the card
+cur(c0 + 1.0, 0, 'scr', 1180, 640);
 T += 3.4;
 
 {
   s = say('安装成功后，双击【苏电IM】桌面图标，', 6.2);
-  const ic = [ICON.x - 12, ICON.y - 10, ICON.x + ICON.size + 12, ICON.y + ICON.size + 40];
-  FOCUS.push({ t0: s + 0.3, t1: s + 2.8, space: 'world', rect: ic });
-  BADGES.push({ t0: s + 0.3, t1: s + 2.9, n: 1, space: 'world', x: ic[0], y: ic[1] });
-  cam(s + 0.3, 1.2, 330, 220, 1.6);
-  cur(s + 0.6, 1.3, 'world', ICON.x + ICON.size / 2 + 4, ICON.y + ICON.size / 2 + 6);
-  click(s + 2.1, 'world', ICON.x + ICON.size / 2 + 4, ICON.y + ICON.size / 2 + 6);
-  click(s + 2.3, 'world', ICON.x + ICON.size / 2 + 4, ICON.y + ICON.size / 2 + 6);
+  const ic = [ICON.x + 8, ICON.y + 8, ICON.x + 118, ICON.y + 112];   // icon + label
+  FOCUS.push({ t0: s + 0.3, t1: s + 2.8, space: 'scr', rect: ic });
+  BADGES.push({ t0: s + 0.3, t1: s + 2.9, n: 1, space: 'scr', x: ic[0], y: ic[1] });
+  cam(s + 0.3, 1.2, ...sp(260, 200), 1.9);
+  cur(s + 0.6, 1.3, 'scr', ICON.x + 52, ICON.y + 48);
+  click(s + 2.1, 'scr', ICON.x + 52, ICON.y + 48);
+  click(s + 2.3, 'scr', ICON.x + 52, ICON.y + 48);
   var tLogin = s + 2.7;
   cam(s + 2.7, 1.3, ...lgP(470, 200), 1.25);
 }
@@ -264,48 +258,41 @@ export const OUT_SUBS = SUBS.map((x) => ({ t0: x.t0 / SPEED, t1: x.t1 / SPEED, t
 // Assets
 // =====================================================================
 const IMG = {};
-const BGC = {};  // fill colours for the area below short pages
-let img5masked;  // img5 with feathered edges
-let iconImg;     // app icon cropped from the platform logo
+let deskIcon;    // the real desktop icon tile, edges feathered into the wallpaper
 
 function loadImg(src) {
   return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
 }
-function sample(img, x, y) {
-  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-  const g = c.getContext('2d'); g.drawImage(img, 0, 0);
-  const d = g.getImageData(x * HD, y * HD, 1, 1).data;
-  return `rgb(${d[0]},${d[1]},${d[2]})`;
+// recording frames are loaded on demand (a few are kept)
+const FRAMES = new Map();
+function frameImg(name) {
+  if (!FRAMES.has(name)) {
+    FRAMES.set(name, loadImg(`assets/rec1/${name}.jpg`).then((i) => i.decode().then(() => i)));
+    if (FRAMES.size > 12) FRAMES.delete(FRAMES.keys().next().value);
+  }
+  return FRAMES.get(name);
 }
 
 let cv, ctx;
 export async function setup() {
   cv = document.getElementById('c');
   ctx = cv.getContext('2d');
-  for (const n of ['img3', 'img4', 'img5', 'img6', 'img6_closed', 'img7', 'img7_empty'])
-    IMG[n] = await loadImg(HD === 2 ? `assets/hd/${n}.png` : `assets/${n}.png`);
-  BGC.img3 = sample(IMG.img3, 600, IMG.img3.height / HD - 3);
-  BGC.img6 = sample(IMG.img6, 60, IMG.img6.height / HD - 2);
-
-  // feathered img5
-  const c = document.createElement('canvas'); c.width = IMG.img5.width; c.height = IMG.img5.height;
+  for (const n of ['img7', 'img7_empty']) IMG[n] = await loadImg(`assets/${n}.png`);
+  IMG.taskbar = await loadImg('assets/rec1/taskbar.jpg');
+  const ic = await loadImg('assets/desk_icon.png');
+  const c = document.createElement('canvas'); c.width = ic.width; c.height = ic.height;
   const g = c.getContext('2d');
-  g.drawImage(IMG.img5, 0, 0);
+  g.drawImage(ic, 0, 0);
   g.globalCompositeOperation = 'destination-in';
-  const f = 26 * HD;
-  const gx = g.createLinearGradient(0, 0, c.width, 0);
-  gx.addColorStop(0, 'rgba(0,0,0,0)'); gx.addColorStop(f / c.width, '#000');
-  gx.addColorStop(1 - f / c.width, '#000'); gx.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = gx; g.fillRect(0, 0, c.width, c.height);
-  const gy = g.createLinearGradient(0, 0, 0, c.height);
-  gy.addColorStop(0, '#000'); gy.addColorStop(1 - f / c.height, '#000'); gy.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = gy; g.fillRect(0, 0, c.width, c.height);
-  img5masked = c;
-
-  // icon: the platform logo from img5's header
-  const ic = document.createElement('canvas'); ic.width = 88; ic.height = 80;
-  ic.getContext('2d').drawImage(IMG.img5, 106 * HD, 8 * HD, 44 * HD, 40 * HD, 0, 0, 88, 80);
-  iconImg = ic;
+  const f = 14, w = c.width, h = c.height;
+  const gx = g.createLinearGradient(0, 0, w, 0);
+  gx.addColorStop(0, 'rgba(0,0,0,0)'); gx.addColorStop(f / w, '#000'); gx.addColorStop(1 - f / w, '#000'); gx.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gx; g.fillRect(0, 0, w, h);
+  const gy = g.createLinearGradient(0, 0, 0, h);
+  gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(f / h, '#000'); gy.addColorStop(1 - f / h, '#000'); gy.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gy; g.fillRect(0, 0, w, h);
+  deskIcon = c;
+  await Promise.all(['A/0030', 'A_hold', 'A_modal', 'B_blank', 'B_page'].map(frameImg));
 
   // fonts: load every glyph the film uses
   const all = SUBS.map((s) => s.text).join('') + CARDS.map((c) => c.tag + c.title).join('') +
@@ -327,6 +314,9 @@ function camAt(t) {
     const p = k.d ? ease(prog(t, k.t, k.d)) : 1;
     cx = lerp(cx, k.cx, p); cy = lerp(cy, k.cy, p); z = Math.exp(lerp(Math.log(z), Math.log(k.z), p));
   }
+  const fit = (c, half, lo, size) => (2 * half >= size ? lo + size / 2 : clamp(c, lo + half, lo + size - half));
+  cx = fit(cx, STAGE.w / 2 / z, SCR.x, 1920 * SCR.s);
+  cy = fit(cy, STAGE.h / 2 / z, SCR.y, 1080 * SCR.s);
   return { cx, cy, z };
 }
 // world → screen
@@ -335,8 +325,7 @@ function W2S(cam, x, y) {
 }
 // any space → world
 function toWorld(space, x, y) {
-  if (space === 'content') return brC(x, y);
-  if (space === 'units') return brU(x, y);
+  if (space === 'scr') return sp(x, y);
   if (space === 'login') return lgP(x, y);
   return [x, y];
 }
@@ -390,206 +379,77 @@ function layoutRich(g, text, px, w, maxW) {
 }
 
 // =====================================================================
-// Browser window
+// The recorded screen
 // =====================================================================
-function drawBrowser(g, t) {
-  const u = BR.s;
+// which recording frame (or still) is on screen at t, and the one it is fading from
+function recAt(t) {
+  let i = 0;
+  for (let k = 0; k < REC.length; k++) if (t >= REC[k].t) i = k;
+  const nameOf = (r, tt) => r.img ||
+    `${r.src}/${String(Math.min(r.f1, r.f0 + Math.floor((tt - r.t) * FPS_REC + 1e-6))).padStart(4, '0')}`;
+  const r = REC[i], prev = REC[i - 1];
+  const k = r.fade ? prog(t, r.t, r.fade) : 1;
+  return { r, name: nameOf(r, t), prevName: prev && k < 1 ? nameOf(prev, r.t) : null, k };
+}
+
+function drawScreenFrame(g, t, R, F) {
   g.save();
-  g.translate(BR.x, BR.y);
-  g.scale(u, u);
-  const ww = BR.cw, hh = BR.chrome + BR.ch;
-  // shadow + frame
-  g.save();
-  g.shadowColor = 'rgba(20,35,50,0.28)'; g.shadowBlur = 40; g.shadowOffsetY = 14;
-  rr(g, 0, 0, ww, hh, 10); g.fillStyle = '#DEE3E9'; g.fill();
-  g.restore();
-  g.save(); rr(g, 0, 0, ww, hh, 10); g.clip();
-  // tab strip
-  g.fillStyle = '#DEE3E9'; g.fillRect(0, 0, ww, 38);
-  // window dots / controls (generic)
-  g.fillStyle = '#9AA4AE';
-  g.font = font(15); g.textBaseline = 'middle';
-  g.fillText('—', ww - 120, 19); g.fillText('☐', ww - 80, 19); g.fillText('✕', ww - 38, 19);
-  // tab
-  const tab2 = t >= tLoad;
-  const title = tab2 ? '苏电智伴·通用智能体平台' : '数字化门户';
-  g.fillStyle = '#FFFFFF';
-  rr(g, 12, 6, 240, 40, 8); g.fill();
-  g.fillStyle = '#2E7CF6'; g.beginPath(); g.arc(34, 22, 7, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#33404C'; g.font = font(14); g.fillText(title, 50, 22);
-  // toolbar
-  g.fillStyle = '#FFFFFF'; g.fillRect(0, 38, ww, 40);
-  g.strokeStyle = '#E3E7EB'; g.lineWidth = 1; g.beginPath(); g.moveTo(0, 77.5); g.lineTo(ww, 77.5); g.stroke();
-  g.fillStyle = '#7B8792'; g.font = font(18);
-  g.fillText('←', 22, 58); g.fillText('→', 56, 58); g.fillText('↻', 92, 58);
-  // address field
-  const focused = t >= tAddrClick && t < tEnter + 0.1;
-  rr(g, 150, 44, 1150, 28, 14);
-  g.fillStyle = focused ? '#FFFFFF' : '#F1F3F5'; g.fill();
-  if (focused) { g.strokeStyle = '#2E7CF6'; g.lineWidth = 2; g.stroke(); }
-  g.font = font(15); g.fillStyle = '#33404C';
-  let addr = '';
-  if (t >= tLoad) addr = URL;
-  else if (t >= tType0) addr = URL.slice(0, Math.floor((t - tType0) / 0.075) + 1);
-  if (t < tAddrClick) {
-    g.fillStyle = '#33404C'; g.fillText(PORTAL, 168, 59);
-  } else if (t < tType0) {
-    // selected old address
-    g.fillStyle = '#B9D3FB'; g.fillRect(165, 49, g.measureText(PORTAL).width + 6, 20);
-    g.fillStyle = '#33404C'; g.fillText(PORTAL, 168, 59);
+  g.translate(SCR.x, SCR.y); g.scale(SCR.s, SCR.s);
+  if (R.prevName && F[R.prevName]) g.drawImage(F[R.prevName], 0, 0, 1920, 1080);
+  const im = F[R.name];
+  if (R.prevName && R.r.pop) {
+    // a pop-up: the dimmed page fades in, the pop-up itself scales up from 96 %
+    g.globalAlpha = easeOut(clamp(R.k * 2));
+    g.drawImage(im, 0, 0, 1920, 1080);
+    const p = R.r.pop, cx = (p[0] + p[2]) / 2, cy = (p[1] + p[3]) / 2, sc = lerp(0.96, 1, backOut(R.k));
+    g.globalAlpha = easeOut(R.k);
+    g.translate(cx, cy); g.scale(sc, sc); g.translate(-cx, -cy);
+    g.drawImage(im, p[0], p[1], p[2] - p[0], p[3] - p[1], p[0], p[1], p[2] - p[0], p[3] - p[1]);
   } else {
-    g.fillText(addr, 168, 59);
-    if (t < tEnter && Math.floor((t - tType0) * 2.2) % 2 === 0 || (t >= tType0 && t < tType1)) {
-      const cw = g.measureText(addr).width;
-      g.fillStyle = '#1E2933'; g.fillRect(170 + cw, 49, 1.5, 19);
-    }
+    g.globalAlpha = R.prevName ? easeOut(R.k) : 1;
+    g.drawImage(im, 0, 0, 1920, 1080);
   }
-  // content
-  g.save();
-  g.translate(0, BR.chrome);
-  g.beginPath(); g.rect(0, 0, BR.cw, BR.ch); g.clip();
-  drawContent(g, t);
-  g.restore();
-  g.restore();
-  g.restore();
-}
-
-function drawPage(g, img, bg) {
-  g.fillStyle = bg; g.fillRect(0, 0, BR.cw, BR.ch);
-  g.drawImage(img, 0, 0);
-}
-
-function drawContent(g, t) {
-  if (t < tEnter) {
-    // 方式一: portal → pop-up → menu
-    if (t < tModal + 0.45) {
-      g.fillStyle = BGC.img3; g.fillRect(0, 0, BR.cw, BR.ch);
-      g.drawImage(IMG.img3, 0, 0, IMG.img3.width / HD * IMG3S, IMG.img3.height / HD * IMG3S);
+  g.globalAlpha = 1;
+  // 方式二 before the page loads: a new tab, typing the address
+  if (R.name === 'B_blank') {
+    g.fillStyle = '#1F1F1F'; g.font = '400 14px "Noto Sans SC"'; g.textBaseline = 'middle';
+    g.fillText('新标签页', 56, 23);
+    if (t >= tAddrClick) {
+      g.strokeStyle = '#0B57D0'; g.lineWidth = 2; rr(g, 119, 51, 1540, 29, 14); g.stroke();
+      const n = t < tType0 ? 0 : Math.min(URL.length, Math.floor((t - tType0) / 0.075) + 1);
+      const txt = URL.slice(0, n);
+      g.font = '400 17px "Noto Sans SC"'; g.fillText(txt, 150, 66);
+      if (Math.floor(t * 2.2) % 2 === 0 || n < URL.length) g.fillRect(151 + g.measureText(txt).width, 57, 1.3, 18);
     }
-    if (t >= tModal) {
-      const k = prog(t, tModal, 0.45);
-      // background of img4 (dimmed portal) fades in, pop-up scales from the card
-      g.save(); g.globalAlpha = ease(k);
-      D(g, IMG.img4, 0, 0);
-      g.restore();
-      if (k < 1) {
-        // redraw the pop-up region with a scale-in on top
-        const sc = lerp(0.9, 1, backOut(k));
-        const mx = 668, my = 358;
-        g.save(); g.globalAlpha = ease(k);
-        g.translate(mx, my); g.scale(sc, sc); g.translate(-mx, -my);
-        D(g, IMG.img4, 115, 72, 1107, 579, 115, 72, 1107, 579);
-        g.restore();
-      }
-    }
-    if (t >= tMenu1) {
-      const k = prog(t, tMenu1, 0.3);
-      g.save(); g.globalAlpha = easeOut(k);
-      g.translate(A5.x, A5.y); g.scale(A5.s, A5.s);
-      g.drawImage(img5masked, 0, 0, img5masked.width / HD, img5masked.height / HD);
-      g.restore();
-      drawHoverRows(g, t, hoverRows1);
-    }
-    if (t >= tEnter - 0.001 && t < tEnter) {}
-    return;
-  }
-  // 方式二: blank while loading, then the micro-portal
-  g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, BR.cw, BR.ch);
-  if (t >= tLoad) {
-    const k = easeOut(prog(t, tLoad, 0.5));
-    g.save(); g.globalAlpha = k;
-    drawImg6(g, false);
-    g.restore();
-    // loading bar
-    if (t < tLoad + 0.6) {
-      g.fillStyle = '#2E7CF6'; g.fillRect(0, 0, BR.cw * easeOut(prog(t, tEnter, 0.8)), 3);
-    }
-  }
-  if (t >= tMenu2) {
-    const k = prog(t, tMenu2, 0.28);
-    const r = [538, 262, 680, 390];
-    g.save();
-    g.beginPath(); g.rect(r[0], r[1], r[2] - r[0], r[3] - r[1]); g.clip();
-    g.globalAlpha = easeOut(k);
-    const sy = lerp(0.85, 1, easeOut(k));
-    g.translate(0, r[1]); g.scale(1, sy); g.translate(0, -r[1]);
-    D(g, IMG.img6, r[0], r[1], r[2] - r[0], r[3] - r[1], r[0], r[1], r[2] - r[0], r[3] - r[1]);
-    g.restore();
-    drawHoverRows(g, t, hoverRows2);
-  }
-}
-
-function drawImg6(g) {
-  g.fillStyle = BGC.img6; g.fillRect(0, 0, BR.cw, BR.ch);
-  // let the page continue softly below the screenshot
-  const h6 = IMG.img6.height / HD, w6 = IMG.img6.width / HD;
-  D(g, IMG.img6, 0, h6 - 2, w6, 2, 0, h6, BR.cw, BR.ch);
-  D(g, IMG.img6_closed, 0, 0);
-  // the line of text the menu covered in the screenshot
-  g.save();
-  g.font = font(11.2, 400); g.fillStyle = '#3B3F48'; g.textBaseline = 'alphabetic';
-  let x = 537.5;
-  for (const ch of '造的一站式AI智能体研发与') {
-    g.fillText(ch, x, 370.5);
-    x += /[A-Z]/.test(ch) ? g.measureText(ch).width + 0.6 : 11.42;
   }
   g.restore();
-}
-
-function drawHoverRows(g, t, rows) {
-  for (const r of rows) {
-    const a = win(t, r.t0, r.t1, 0.15, 0.15);
-    if (a <= 0) continue;
-    g.save(); g.globalAlpha = a * 0.16; g.fillStyle = '#2E7CF6';
-    rr(g, r.rect[0], r.rect[1], r.rect[2] - r.rect[0], r.rect[3] - r.rect[1], 6); g.fill();
-    g.restore();
-  }
 }
 
 // =====================================================================
-// Desktop and login
+// Desktop and login (screen pixels)
 // =====================================================================
 function drawDesktop(g, t) {
-  // wallpaper
-  const gr = g.createLinearGradient(0, 0, STAGE.w, STAGE.h);
-  gr.addColorStop(0, '#2C5F8A'); gr.addColorStop(0.55, '#3F86A8'); gr.addColorStop(1, '#7FC0C4');
-  g.fillStyle = gr; g.fillRect(-400, -400, STAGE.w + 800, STAGE.h + 800);
-  g.save(); g.globalAlpha = 0.12; g.fillStyle = '#FFFFFF';
-  g.beginPath(); g.ellipse(1450, 760, 900, 300, -0.2, 0, Math.PI * 2); g.fill();
-  g.restore();
-  // icons
-  drawDeskIcon(g, ICON.x, ICON.y + 130, null, '此电脑', t);
-  drawDeskIcon(g, ICON.x, ICON.y + 260, null, '回收站', t);
-  const sel = t >= tLogin - 0.6 && t < tLogin + 2;
-  drawDeskIcon(g, ICON.x, ICON.y, iconImg, '苏电IM', t, sel);
-  // taskbar
-  g.fillStyle = 'rgba(16,28,40,0.72)'; g.fillRect(-400, STAGE.h - 46, STAGE.w + 800, 46);
-}
-function drawDeskIcon(g, x, y, img, label, t, selected = false) {
-  const s = ICON.size;
-  if (selected) { g.fillStyle = 'rgba(255,255,255,0.22)'; rr(g, x - 10, y - 8, s + 20, s + 40, 6); g.fill(); }
-  if (img) {
-    g.save();
-    g.shadowColor = 'rgba(0,0,0,0.25)'; g.shadowBlur = 8; g.shadowOffsetY = 3;
-    rr(g, x + 6, y + 4, s - 12, s - 12, 14); g.fillStyle = '#FFFFFF'; g.fill();
-    g.restore();
-    g.drawImage(img, x + 14, y + 13, s - 28, (s - 28) * 40 / 44);
-  } else {
-    g.fillStyle = 'rgba(255,255,255,0.85)';
-    rr(g, x + 14, y + 10, s - 28, s - 30, 6); g.fill();
-    g.fillStyle = 'rgba(40,70,100,0.5)'; g.fillRect(x + 22, y + 18, s - 44, s - 48);
+  g.save();
+  g.translate(SCR.x, SCR.y); g.scale(SCR.s, SCR.s);
+  const gr = g.createLinearGradient(0, 0, 0, 1040);
+  gr.addColorStop(0, '#0C76B0'); gr.addColorStop(1, '#2280AF');
+  g.fillStyle = gr; g.fillRect(0, 0, 1920, 1040);
+  const sel = t >= tLogin - 0.6 && t < tLogin + 2.5;
+  if (sel) {   // Windows selection box
+    g.fillStyle = 'rgba(255,255,255,0.22)'; g.fillRect(ICON.x + 8, ICON.y + 8, 110, 104);
+    g.strokeStyle = 'rgba(255,255,255,0.45)'; g.lineWidth = 1; g.strokeRect(ICON.x + 8.5, ICON.y + 8.5, 109, 103);
   }
-  g.fillStyle = '#FFFFFF'; g.font = font(17, 500); g.textAlign = 'center'; g.textBaseline = 'top';
-  g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 4;
-  g.fillText(label, x + s / 2, y + s - 6);
-  g.shadowBlur = 0; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.drawImage(deskIcon, ICON.x, ICON.y, ICON.size, ICON.size);
+  g.drawImage(IMG.taskbar, 0, 1040, 1920, 40);
+  g.restore();
 }
 
 function drawLogin(g, t) {
   if (t < tLogin) return;
   const k = prog(t, tLogin, 0.4);
-  const im = IMG.img7_empty, iw = im.width / HD, ih = im.height / HD;
+  const im = IMG.img7_empty, iw = im.width, ih = im.height;
   g.save();
+  g.translate(SCR.x, SCR.y); g.scale(SCR.s, SCR.s);
   const cx = LG.x + iw * LG.s / 2, cy = LG.y + ih * LG.s / 2;
   const sc = lerp(0.92, 1, backOut(k));
   g.globalAlpha = easeOut(k);
@@ -598,26 +458,22 @@ function drawLogin(g, t) {
   g.save(); g.shadowColor = 'rgba(0,0,0,0.35)'; g.shadowBlur = 30; g.shadowOffsetY = 10;
   g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, iw, ih); g.restore();
   D(g, im, 0, 0);
-  // field focus
   const accFocus = t >= tAcc && t < tPw, pwFocus = t >= tPw && t < tLoginClick;
   for (const [on, y] of [[accFocus, 131], [pwFocus, 201]]) {
     if (!on) continue;
     g.strokeStyle = '#2E7CF6'; g.lineWidth = 1.5; rr(g, 343, y, 324, 38, 7); g.stroke();
   }
-  // typed account (already blurred in the asset), revealed left to right
   if (t >= tAccType[0]) {
     const p = prog(t, tAccType[0], tAccType[1] - tAccType[0]);
     const w = Math.round(7 * p) / 7 * 82;
     if (w > 0) D(g, IMG.img7, 386, 137, w, 28, 386, 137, w, 28);
     if (accFocus && p < 1) { g.fillStyle = '#1E2933'; g.fillRect(392 + w * 0.85, 141, 1.2, 18); }
   }
-  // password dots
   if (t >= tPwType[0]) {
     const p = prog(t, tPwType[0], tPwType[1] - tPwType[0]);
     const w = Math.round(11 * p) / 11 * 92;
     if (w > 0) D(g, IMG.img7, 390, 207, w, 27, 390, 207, w, 27);
   }
-  // button press
   if (t >= tLoginClick && t < tLoginClick + 0.25) {
     g.fillStyle = 'rgba(0,0,0,0.12)'; rr(g, 343, 286, 324, 40, 6); g.fill();
   }
@@ -688,14 +544,15 @@ function drawClicks(g, t, cam) {
   }
 }
 
-function drawCursor(g, t, cam) {
-  if (t < tStageIn + 1.2) return;
+function drawCursor(g, t, cam, R) {
+  const synth = t >= tDesk + 0.2 || (t < tDesk && R && R.r.synth);
+  if (!synth) return;
   const [wx, wy] = cursorAt(t);
   const [x, y] = W2S(cam, wx, wy);
   // press: shrink briefly
   let press = 1;
   for (const c of CLICKS) if (t >= c.t - 0.05 && t < c.t + 0.15) press = 0.86;
-  const s = 1.35 * Math.sqrt(cam.z) * press;
+  const s = 0.82 * SCR.s * cam.z * press;   // the size of the real Windows pointer in the recording
   g.save();
   g.translate(x, y); g.scale(s, s);
   g.shadowColor = 'rgba(0,0,0,0.35)'; g.shadowBlur = 6; g.shadowOffsetY = 2;
@@ -926,8 +783,11 @@ function drawRecap(g, t) {
 // =====================================================================
 // Frame
 // =====================================================================
-export function renderAt(tOut) {
+export async function renderAt(tOut) {
   const t = tOut * SPEED;
+  const R = t < tDesk + 0.7 ? recAt(t) : null;
+  const F = {};
+  if (R) for (const n of [R.name, R.prevName]) if (n) F[n] = await frameImg(n);
   const g = ctx;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
@@ -953,16 +813,17 @@ export function renderAt(tOut) {
     g.scale(cam.z, cam.z);
     g.translate(-cam.cx, -cam.cy);
     // world
+    g.fillStyle = '#D7DFE6'; g.fillRect(-600, -600, STAGE.w + 1200, STAGE.h + 1200);
     if (t >= tDesk) drawDesktop(g, t);
-    else { g.fillStyle = '#D7DFE6'; g.fillRect(-600, -600, STAGE.w + 1200, STAGE.h + 1200); }
-    if (t < tDesk + 0.7) {
-      // browser (minimises into the taskbar when the desktop appears)
+    if (R) {
+      // the browser minimises into its taskbar button when the desktop appears
       const m = ease(prog(t, tDesk, 0.7));
+      const [tx, ty] = sp(320, 1060);   // Chrome's taskbar button
       g.save();
-      g.globalAlpha = 1 - m;
-      const cx = WCX, cy = STAGE.h;
-      g.translate(cx, cy * m * 0.6 + 0); g.scale(1 - 0.6 * m, 1 - 0.6 * m); g.translate(-cx, 0);
-      drawBrowser(g, t);
+      g.globalAlpha = 1 - m * m;
+      g.translate(tx, ty); g.scale(1 - 0.92 * m, 1 - 0.92 * m); g.translate(-tx, -ty);
+      g.translate(0, 0);
+      drawScreenFrame(g, t, R, F);
       g.restore();
     }
     drawLogin(g, t);
@@ -970,7 +831,7 @@ export function renderAt(tOut) {
     drawFocus(g, t, cam);
     drawClicks(g, t, cam);
     drawBadges(g, t, cam);
-    drawCursor(g, t, cam);
+    drawCursor(g, t, cam, R);
     drawTips(g, t);
     drawCards(g, t);
     g.restore();
