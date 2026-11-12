@@ -68,7 +68,9 @@ const CAM = [];           // camera keys: {t, d, cx, cy, z}
 const CUR = [];           // cursor keys: {t, d, space, x, y}  (moves to x,y over d)
 const STEP = [];          // progress bar: {t, i}
 const REC = [];           // what the screen shows: {t, src, f0, f1} (playback) or {t, img, synth, fade, pop} (still)
-const play = (t, src, f0, f1) => { REC.push({ t, src, f0, f1 }); return t + (f1 - f0) / FPS_REC; };
+// rate 1 = 25 recording frames per film second (plays 1.2x in the output); REAL = recorded speed in the output
+const REAL = 1 / 1.2;
+const play = (t, src, f0, f1, rate = 1) => { REC.push({ t, src, f0, f1, rate }); return t + (f1 - f0) / FPS_REC / rate; };
 const still = (t, img, o = {}) => REC.push({ t, img, synth: !!o.synth, fade: o.fade || 0, pop: o.pop });
 
 let T = 0;
@@ -139,30 +141,24 @@ FOCUS.push({ t0: s + 0.2, t1: T - 0.2, space: 'scr', rect: [195, 200, 1731, 997]
 cam(s + 0.3, T - s - 0.3, ...sp(960, 560), 1.07);           // slow push while the pop-up rests
 
 {
+  // one continuous take, at recorded speed: hover 下载客户端 → menu → both sub-menus.
+  // The lines follow one another over it; what reading needs beyond the take is a rest on the open menus.
+  const t0 = T;
+  const te = play(t0 + 0.2, 'A', 178, 313, REAL);
+  click(t0 + 0.2 + 23 / FPS_REC / REAL, 'scr', 872, 578);
+  still(te, 'A/0313');
+  cam(t0, 1.0, ...sp(940, 720), 1.5);                         // one framing: button, menu and sub-menus
+  const b = [800, 557, 940, 603], m = [774, 618, 962, 740];
   s = say('点击【下载客户端】按钮。');
-  const b = [800, 557, 940, 603];
   BADGES.push({ t0: s, t1: s + 1.6, n: 2, space: 'scr', x: b[0], y: b[1] });
   FOCUS.push({ t0: s, t1: s + 1.4, space: 'scr', rect: b });
-  cam(s, 0.9, ...sp(880, 640), 1.8);
-  const te = play(s + 0.3, 'A', 178, 206);
-  click(s + 0.3 + 23 / FPS_REC, 'scr', 872, 578);
-  still(te, 'A/0206');
-}
-
-{
   s = say('（3）在弹出的选项中，根据电脑操作系统');
-  const m = [774, 618, 962, 740];               // the white menu (measured)
   BADGES.push({ t0: s, t1: T, n: 3, space: 'scr', x: m[0], y: m[1] });
-  FOCUS.push({ t0: s, t1: T, space: 'scr', rect: m });
+  FOCUS.push({ t0: s - 1.6, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });   // menu + sub-menus
   TIPS.push({ t0: s + 0.5, t1: T + 5.0, text: '根据电脑操作系统选择' });
-  cam(s, 0.8, ...sp(900, 690), 1.8);
-}
-{
   s = say('选择【Windows客户端】或【国产信创客户端】进行下载，');
-  FOCUS.push({ t0: s, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });   // menu + sub-menus
-  cam(s, 0.8, ...sp(945, 770), 1.6);
-  const te = play(s + 0.1, 'A', 206, 313);
-  still(te, 'A/0313');
+  FOCUS.push({ t0: s - 0.2, t1: T - 0.2, space: 'scr', rect: [774, 618, 1112, 895] });
+  cam(Math.max(te, t0 + 1.0), T - Math.max(te, t0 + 1.0), ...sp(940, 760), 1.62);   // slow push on the open menus
 }
 s = say('下载成功后根据提示一步一步安装。');
 cam(s + 0.2, 1.2, WCX, WCY, 1);
@@ -380,7 +376,7 @@ function recAt(t) {
   let i = 0;
   for (let k = 0; k < REC.length; k++) if (t >= REC[k].t) i = k;
   const nameOf = (r, tt) => r.img ||
-    `${r.src}/${String(Math.min(r.f1, r.f0 + Math.floor((tt - r.t) * FPS_REC + 1e-6))).padStart(4, '0')}`;
+    `${r.src}/${String(Math.min(r.f1, r.f0 + Math.floor((tt - r.t) * FPS_REC * (r.rate || 1) + 1e-6))).padStart(4, '0')}`;
   const r = REC[i], prev = REC[i - 1];
   const k = r.fade ? prog(t, r.t, r.fade) : 1;
   return { r, name: nameOf(r, t), prevName: prev && k < 1 ? nameOf(prev, r.t) : null, k };
@@ -746,7 +742,7 @@ function drawOutline(g, t, active, x0, y0, appear) {
 }
 
 function drawTitle(g, t) {
-  const a = Math.min(clamp(t / 0.5), clamp((tStageIn + 0.4 - t) / 0.6));
+  const a = Math.min(clamp(t / 0.5), clamp((tStageIn - t) / 0.6));   // gone before the stage fades in
   if (a <= 0) return;
   g.save();
   g.globalAlpha = a;
@@ -835,7 +831,7 @@ export async function renderAt(tOut) {
   g.globalAlpha = 1;
   g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
 
-  if (t >= tStageIn - 0.2 && t < tRecap + 0.6) {
+  if (t >= tStageIn && t < tRecap + 0.6) {
     const cam = camAt(t);
     const appear = easeOut(clamp((t - tStageIn) / 0.8));
     g.save();
