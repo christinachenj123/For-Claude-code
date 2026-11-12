@@ -30,7 +30,7 @@ const ICON = { x: 70, y: 40, size: 78 };
 const A5 = { x: 154.0, y: 104.7, s: 0.7796 };
 const p5to4 = (x, y) => [A5.x + x * A5.s, A5.y + y * A5.s];
 const IMG3S = 1352 / 1256; // img3 is scaled to the content width
-const HD = 2;               // assets/hd holds 2x screenshots
+const HD = 1;               // original screenshots (set 2 to use the 2x ones in assets/hd)
 // drawImage in logical (1x) pixels: (x, y) | (x, y, w, h) | (sx, sy, sw, sh, dx, dy, dw, dh)
 function D(g, im, ...a) {
   if (a.length === 2) return g.drawImage(im, a[0], a[1], im.width / HD, im.height / HD);
@@ -283,7 +283,7 @@ export async function setup() {
   cv = document.getElementById('c');
   ctx = cv.getContext('2d');
   for (const n of ['img3', 'img4', 'img5', 'img6', 'img6_closed', 'img7', 'img7_empty'])
-    IMG[n] = await loadImg(`assets/hd/${n}.png`);
+    IMG[n] = await loadImg(HD === 2 ? `assets/hd/${n}.png` : `assets/${n}.png`);
   BGC.img3 = sample(IMG.img3, 600, IMG.img3.height / HD - 3);
   BGC.img6 = sample(IMG.img6, 60, IMG.img6.height / HD - 2);
 
