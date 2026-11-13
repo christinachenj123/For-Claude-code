@@ -16,12 +16,12 @@ const C = {
 };
 
 // ---------- layout ----------
-const STAGE = { x: 40, y: 84, w: 1840, h: 820, r: 18 };   // the "screen" area
+const STAGE = { x: 0, y: 70, w: 1920, h: 910, r: 0 };     // below the top bar; the bottom 100 px stay free for subtitles
 const SUBY = 990;                                          // subtitle centre line
 
 // The recorded screen (1920x1080 screen pixels, "scr") inside the stage (world = stage pixels)
-const SCR = { s: 0.735 };
-SCR.x = (1840 - 1920 * SCR.s) / 2; SCR.y = (820 - 1080 * SCR.s) / 2;
+const SCR = { s: 900 / 1080 };                             // the recording at 83 % (was 73.5 %)
+SCR.x = (1920 - 1920 * SCR.s) / 2; SCR.y = (910 - 1080 * SCR.s) / 2;
 const sp = (x, y) => [SCR.x + x * SCR.s, SCR.y + y * SCR.s];
 const FPS_REC = 25;
 // frames per second of each recording (assets/rec2/<src>/NNNN.jpg)
@@ -821,17 +821,17 @@ export async function renderAt(tOut) {
     drawTopBar(g, t);
     // stage
     g.save();
-    g.shadowColor = 'rgba(20,35,50,0.18)'; g.shadowBlur = 30; g.shadowOffsetY = 8;
-    rr(g, STAGE.x, STAGE.y, STAGE.w, STAGE.h, STAGE.r); g.fillStyle = '#CFD8E0'; g.fill();
-    g.restore();
-    g.save();
     rr(g, STAGE.x, STAGE.y, STAGE.w, STAGE.h, STAGE.r); g.clip();
     g.save();
     g.translate(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2);
     g.scale(cam.z, cam.z);
     g.translate(-cam.cx, -cam.cy);
     // world
-    g.fillStyle = '#D7DFE6'; g.fillRect(-600, -600, STAGE.w + 1200, STAGE.h + 1200);
+    g.fillStyle = C.bg; g.fillRect(-600, -600, STAGE.w + 1200, STAGE.h + 1200);
+    g.save();                                                  // the screen floats with a soft shadow
+    g.shadowColor = 'rgba(20,35,50,0.25)'; g.shadowBlur = 28; g.shadowOffsetY = 8;
+    g.fillStyle = '#FFFFFF'; g.fillRect(SCR.x, SCR.y, 1920 * SCR.s, 1080 * SCR.s);
+    g.restore();
     drawScreenFrame(g, t, R, F);
     g.restore();
     drawFocus(g, t, cam);
