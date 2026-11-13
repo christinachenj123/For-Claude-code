@@ -16,22 +16,21 @@ const C = {
 };
 
 // ---------- layout ----------
-const STAGE = { x: 40, y: 84, w: 1840, h: 820, r: 18 };   // the "screen" area
+const STAGE = { x: 0, y: 0, w: 1920, h: 1080, r: 0 };     // the recording fills the frame (1:1, sharpest)
 const SUBY = 990;                                          // subtitle centre line
 
 // The recorded screen (1920x1080 screen pixels, "scr") inside the stage (world = stage pixels)
-const SCR = { s: 0.735 };
-SCR.x = (1840 - 1920 * SCR.s) / 2; SCR.y = (820 - 1080 * SCR.s) / 2;
+const SCR = { s: 1, x: 0, y: 0 };
 const sp = (x, y) => [SCR.x + x * SCR.s, SCR.y + y * SCR.s];
 const FPS_REC = 25;
 // frames per second of each recording (assets/rec3/<src>/NNNN.jpg)
 const FPS_OF = { a: 25, b: 25, c: 25, d: 25 };
 // manual screenshots (old client) shown as a window over a softened backdrop, in screen pixels
 const SHOT = { img25: [1268, 823], img26: [1280, 815], img31: [1280, 805], img32: [1279, 796], img37: [1274, 818], img37_empty: [1274, 818] };
-const SHOT_S = 1.25;
+const SHOT_S = 1.18;   // fits above the bottom bar
 const shotP = (name, x, y) => {
   const [w, h] = SHOT[name];
-  return [(1920 - w * SHOT_S) / 2 + x * SHOT_S, (1080 - h * SHOT_S) / 2 + y * SHOT_S];
+  return [(1920 - w * SHOT_S) / 2 + x * SHOT_S, (1038 - h * SHOT_S) / 2 + y * SHOT_S];
 };
 const HD = 1;
 // drawImage in logical (1x) pixels: (x, y) | (x, y, w, h) | (sx, sy, sw, sh, dx, dy, dw, dh)
@@ -710,28 +709,31 @@ function drawTopBar(g, t) {
   g.save();
   g.globalAlpha = a;
   // chapter pill
-  g.font = font(26, 700); g.textBaseline = 'middle';
+  // a translucent strip over the Windows taskbar (y 1040-1080)
+  const Y = 1060;
+  g.fillStyle = 'rgba(16,28,40,0.82)'; g.fillRect(0, 1038, W, 42);
+  g.font = font(20, 700); g.textBaseline = 'middle';
   const label = '3、工作区';
   const lw = g.measureText(label).width;
-  rr(g, STAGE.x, 18, lw + 48, 50, 25); g.fillStyle = C.green; g.fill();
-  g.fillStyle = '#FFFFFF'; g.fillText(label, STAGE.x + 24, 44);
+  rr(g, 16, Y - 15, lw + 36, 30, 15); g.fillStyle = C.green; g.fill();
+  g.fillStyle = '#FFFFFF'; g.fillText(label, 34, Y + 1);
   // progress steps
   let cur = -1;
   for (const s of STEP) if (t >= s.t) cur = s.i;
-  g.font = font(20, 500);
-  const widths = STEPS.map((s) => g.measureText(s).width + 36);
-  const gap = 26;
-  let x = STAGE.x + STAGE.w - widths.reduce((p, w) => p + w, 0) - gap * (STEPS.length - 1);
+  g.font = font(17, 500);
+  const widths = STEPS.map((s) => g.measureText(s).width + 28);
+  const gap = 20;
+  let x = W - 16 - widths.reduce((p, w) => p + w, 0) - gap * (STEPS.length - 1);
   STEPS.forEach((s, i) => {
     const done = i < cur, on = i === cur;
     if (i > 0) {
-      g.strokeStyle = i <= cur ? C.green : '#B8C3CC'; g.lineWidth = 3;
-      g.beginPath(); g.moveTo(x - gap + 8, 43); g.lineTo(x - 8, 43); g.stroke();
+      g.strokeStyle = i <= cur ? C.greenLight : 'rgba(255,255,255,0.3)'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(x - gap + 5, Y); g.lineTo(x - 5, Y); g.stroke();
     }
-    rr(g, x, 24, widths[i], 38, 19);
-    g.fillStyle = on ? C.green : done ? 'rgba(0,137,123,0.14)' : 'rgba(255,255,255,0.7)'; g.fill();
-    g.fillStyle = on ? '#FFFFFF' : done ? C.green : '#8794A0';
-    g.fillText(s, x + 18, 44);
+    rr(g, x, Y - 14, widths[i], 28, 14);
+    g.fillStyle = on ? C.green : done ? 'rgba(94,224,196,0.18)' : 'rgba(255,255,255,0.10)'; g.fill();
+    g.fillStyle = on ? '#FFFFFF' : done ? C.greenLight : 'rgba(255,255,255,0.6)';
+    g.fillText(s, x + 14, Y + 1);
     x += widths[i] + gap;
   });
   g.restore();
@@ -858,12 +860,6 @@ export async function renderAt(tOut) {
     g.save();
     g.globalAlpha = appear;
     g.translate(0, (1 - appear) * 30);
-    drawTopBar(g, t);
-    // stage
-    g.save();
-    g.shadowColor = 'rgba(20,35,50,0.18)'; g.shadowBlur = 30; g.shadowOffsetY = 8;
-    rr(g, STAGE.x, STAGE.y, STAGE.w, STAGE.h, STAGE.r); g.fillStyle = '#CFD8E0'; g.fill();
-    g.restore();
     g.save();
     rr(g, STAGE.x, STAGE.y, STAGE.w, STAGE.h, STAGE.r); g.clip();
     g.save();
@@ -878,9 +874,10 @@ export async function renderAt(tOut) {
     drawClicks(g, t, cam);
     // step numbers removed from video 1 at the client's request
     drawCursor(g, t, cam, R);
+    g.restore();
+    drawTopBar(g, t);
     drawTips(g, t);
     drawCards(g, t);
-    g.restore();
     g.restore();
     // subtitles removed from video 1 at the client's request (the .srt is still exported)
   }

@@ -40,7 +40,7 @@ for key, path in SRC.items():
             if not os.path.exists(p):
                 continue
             a = blur(np.asarray(Image.open(p).convert('RGB')), HEADER)
-            Image.fromarray(a).save(os.path.join(OUT, key, f'{i:04d}.jpg'), quality=92)
+            Image.fromarray(a).save(os.path.join(OUT, key, f'{i:04d}.jpg'), quality=98, subsampling=0)   # near-lossless
     if key == 'd':   # backdrop for screenshots: the knowledge-base list, softened
         a = blur(np.asarray(Image.open(os.path.join(d, '0060.png')).convert('RGB')), HEADER)
         Image.fromarray(a).filter(ImageFilter.GaussianBlur(14)).save(os.path.join(OUT, 'shot_bg.jpg'), quality=90)
