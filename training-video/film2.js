@@ -263,7 +263,7 @@ te = play(s + 0.1, '224', 150, 292);
   TYPES.push({ space: 'scr', rect: [289, 588, 612, 609], text: '••••••••', px: 15, tClick: tP, t0: tP + 0.2, tEnd: 1e9, on: ['224'] });
   focus(tA - 0.4, te - 1.0, 'scr', [278, 488, 640, 620]);
 }
-focus(te - 1.0, te + 0.6, 'scr', [278, 756, 392, 798]);
+focus(te - 1.0, te + 0.2, 'scr', [278, 756, 392, 798]);
 click(te - 0.2, 'scr', 335, 777);
 still(te, fr('224', 292)); after(te);
 
@@ -317,6 +317,7 @@ const DUR = DUR_FILM;       // used by the drawing code (film time)
 // Whole-film speed: output time = film time / SPEED.
 const SPEED = 1.2;
 export const OUT_DUR = DUR_FILM / SPEED;
+export const OUT_FOCUS = FOCUS.map((f) => ({ t0: f.t0 / SPEED, t1: f.t1 / SPEED, rect: f.rect, space: f.space }));
 export const OUT_SUBS = SUBS.map((x) => ({ t0: x.t0 / SPEED, t1: x.t1 / SPEED, text: x.text }));
 
 // =====================================================================
